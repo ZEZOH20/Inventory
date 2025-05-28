@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "7FBzzq5pDog=",
+  "success": true,
+  "projectFilePath": "D:\\college\\courses\\ITI\\Dotnet4Monthes\\Ado\\Final-Project\\Inventory\\Inventory.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ziead\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.4\\microsoft.aspnetcore.openapi.9.0.4.nupkg.sha512",
+    "C:\\Users\\ziead\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
