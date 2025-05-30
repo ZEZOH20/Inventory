@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "hV9VKQFe4vA=",
+  "dgSpecHash": "oSeFWZT6cEw=",
   "success": true,
   "projectFilePath": "D:\\college\\courses\\ITI\\Dotnet4Monthes\\Ado\\Final-Project\\Inventory\\Inventory.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ziead\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\ziead\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
+    "C:\\Users\\ziead\\.nuget\\packages\\fluentvalidation\\12.0.0\\fluentvalidation.12.0.0.nupkg.sha512",
+    "C:\\Users\\ziead\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.0.0\\fluentvalidation.dependencyinjectionextensions.12.0.0.nupkg.sha512",
     "C:\\Users\\ziead\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\ziead\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.4\\microsoft.aspnetcore.openapi.9.0.4.nupkg.sha512",
     "C:\\Users\\ziead\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\7.0.0\\microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",

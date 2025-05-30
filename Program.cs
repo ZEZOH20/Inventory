@@ -1,7 +1,11 @@
 using Inventory.Data.DbContexts;
+using Inventory.DTO.UserDto.Validations;
 using Inventory.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using Inventory.DTO.UserDto.Requests;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,10 +23,16 @@ builder.Services.AddDbContext<SqlDbContext>(
 
 // Register Custom Services .....
 builder.Services.AddScoped<IUserCrudService, UserCrudService>();
+
+//Automatic Registeration
+builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UserCreateDTOValidator>();
+//builder.Services.AddScoped<IValidator<UserUpdateDTO>, UserUpdateDTOValidator>();
 // Register Custom Services .....
 
 //Swagger Services
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
