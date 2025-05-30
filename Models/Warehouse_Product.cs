@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Inventory.Models
 {
-    public class Stock_Product
+    public class Warehouse_Product
     {
         public int Id { get; set; }
 

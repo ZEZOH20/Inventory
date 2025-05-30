@@ -1,4 +1,5 @@
 using Inventory.Data.DbContexts;
+using Inventory.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,15 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at 
 builder.Services.AddOpenApi();
 
-//connect to Database EF
+//connect to Database EF ......
 builder.Services.AddDbContext<SqlDbContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("SqlDbConnection"))
 );
+//connect to Database EF ......
+
+// Register Custom Services .....
+builder.Services.AddScoped<IUserCrudService, UserCrudService>();
+// Register Custom Services .....
 
 //Swagger Services
 builder.Services.AddEndpointsApiExplorer();

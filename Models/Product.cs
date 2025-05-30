@@ -15,6 +15,6 @@ namespace Inventory.Models
         public int Unit_id { get; set; }
         public Unit Unit { get; set; }
 
-        public List<Stock_Product>? Stock_Product { get; set; }
+        public List<Warehouse_Product>? Warehouse_Product { get; set; }
     }
 }

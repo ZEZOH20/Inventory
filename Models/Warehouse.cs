@@ -7,7 +7,6 @@ namespace Inventory.Models
     {
         [Key]
         public int Number {  get; set; }
-
         public string Name { get; set; }
         public string Region {  get; set; }
         public string City { get; set; }
@@ -17,7 +16,7 @@ namespace Inventory.Models
         public int Manager_ID { get; set; }
         public User Manager { get; set; } //Navigation Property
 
-        public List<Stock_Product>? Stock_Product { get; set; }
+        public List<Warehouse_Product>? Warehouse_Product { get; set; }
 
     }
 }
