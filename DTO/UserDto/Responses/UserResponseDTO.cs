@@ -14,6 +14,24 @@ namespace Inventory.DTO.UserDto.Responses
             Mail = user.Mail;
             Domain = user.Domain ?? "No Domain";  
         }
+        public UserResponseDTO(Customer user)
+        {
+            Id = user.Id;
+            Name = user.Name;
+            Phone = user.Phone;
+            Fax = user.Fax ?? "No Fax";
+            Mail = user.Mail;
+            Domain = user.Domain ?? "No Domain";
+        }
+        public UserResponseDTO(Supplier user)
+        {
+            Id = user.Id;
+            Name = user.Name;
+            Phone = user.Phone;
+            Fax = user.Fax ?? "No Fax";
+            Mail = user.Mail;
+            Domain = user.Domain ?? "No Domain";
+        }
         public int Id { get; set; }
         public  string Name { get; set; }
         public int Phone { get; set; }

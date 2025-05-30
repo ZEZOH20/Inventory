@@ -31,11 +31,12 @@ namespace Inventory.Data.DbContexts
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Supplier>Suppliers { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         //public DbSet<Warehouse> Warehouses { get; set; }
         //public DbSet<Product> Products { get; set; }
         //public DbSet<Unit> Units { get; set; }
         //public DbSet<Warehouse_Product> Warehouse_Products { get; set; }
-        //public DbSet<SOP>SOPs { get; set; }
+        //public DbSet<SOP>SOPs { get; set; }S
         //public DbSet<GI>GIs { get; set; }
         //public DbSet<Transfer> Transfers { get; set; }
 

@@ -23,6 +23,8 @@ builder.Services.AddDbContext<SqlDbContext>(
 
 // Register Custom Services .....
 builder.Services.AddScoped<IUserCrudService, UserCrudService>();
+builder.Services.AddScoped<ICustomerCrudService, CustomerCrudService>();
+builder.Services.AddScoped<ISupplierCrudService, SupplierCrudService>();
 
 //Automatic Registeration
 builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateDTOValidator>();
