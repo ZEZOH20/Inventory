@@ -1,6 +1,6 @@
 ﻿namespace Inventory.Models
 {
-    public class Supplier:Person
+    public class Supplier: Person
     {
 
     }

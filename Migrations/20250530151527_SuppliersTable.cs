@@ -5,7 +5,7 @@
 namespace Inventory.Migrations
 {
     /// <inheritdoc />
-    public partial class SupplierTable : Migration
+    public partial class SuppliersTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
