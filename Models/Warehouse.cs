@@ -16,7 +16,7 @@ namespace Inventory.Models
         public int ManagerId { get; set; }
         public User Manager { get; set; } //Navigation Property
 
-        public List<Warehouse_Product>? Warehouse_Product { get; set; }
+        public List<Warehouse_Product>? Warehouse_Products { get; set; }
 
     }
 }

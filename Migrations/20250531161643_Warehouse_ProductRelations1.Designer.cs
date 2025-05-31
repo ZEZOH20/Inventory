@@ -4,6 +4,7 @@ using Inventory.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Inventory.Migrations
 {
     [DbContext(typeof(SqlDbContext))]
-    partial class SqlDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250531161643_Warehouse_ProductRelations1")]
+    partial class Warehouse_ProductRelations1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,105 +76,6 @@ namespace Inventory.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("Inventory.Models.RO_Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Product_Code")
-                        .HasColumnType("int");
-
-                    b.Property<double>("RO_Amount")
-                        .HasColumnType("float");
-
-                    b.Property<int>("RO_Number")
-                        .HasColumnType("int");
-
-                    b.Property<double>("RO_Price")
-                        .HasColumnType("float");
-
-                    b.Property<string>("RO_Unit")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Product_Code");
-
-                    b.HasIndex("RO_Number");
-
-                    b.ToTable("RO_Product");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Release_Order", b =>
-                {
-                    b.Property<int>("Number")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Number"));
-
-                    b.Property<int>("Customer_ID")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("R_Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("War_Number")
-                        .HasColumnType("int");
-
-                    b.HasKey("Number");
-
-                    b.HasIndex("Customer_ID")
-                        .IsUnique();
-
-                    b.HasIndex("War_Number");
-
-                    b.ToTable("Release_Orders");
-                });
-
-            modelBuilder.Entity("Inventory.Models.SO_Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Product_Code")
-                        .HasColumnType("int");
-
-                    b.Property<double>("SO_Amount")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime>("SO_EXP")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("SO_MFD")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("SO_Number")
-                        .HasColumnType("int");
-
-                    b.Property<double>("SO_Price")
-                        .HasColumnType("float");
-
-                    b.Property<string>("SO_Unit")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Product_Code");
-
-                    b.HasIndex("SO_Number");
-
-                    b.ToTable("SO_Products");
-                });
-
             modelBuilder.Entity("Inventory.Models.Supplier", b =>
                 {
                     b.Property<int>("Id")
@@ -200,33 +104,6 @@ namespace Inventory.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Suppliers");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Supply_Order", b =>
-                {
-                    b.Property<int>("Number")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Number"));
-
-                    b.Property<DateTime>("S_Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Supplier_ID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("War_Number")
-                        .HasColumnType("int");
-
-                    b.HasKey("Number");
-
-                    b.HasIndex("Supplier_ID")
-                        .IsUnique();
-
-                    b.HasIndex("War_Number");
-
-                    b.ToTable("Supply_Orders");
                 });
 
             modelBuilder.Entity("Inventory.Models.User", b =>
@@ -337,82 +214,6 @@ namespace Inventory.Migrations
                     b.ToTable("Warehouse_Products", (string)null);
                 });
 
-            modelBuilder.Entity("Inventory.Models.RO_Product", b =>
-                {
-                    b.HasOne("Inventory.Models.Product", "Product")
-                        .WithMany("RO_Products")
-                        .HasForeignKey("Product_Code")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Models.Release_Order", "Release_Order")
-                        .WithMany("RO_Products")
-                        .HasForeignKey("RO_Number")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Release_Order");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Release_Order", b =>
-                {
-                    b.HasOne("Inventory.Models.Customer", "Customer")
-                        .WithOne("Release_Order")
-                        .HasForeignKey("Inventory.Models.Release_Order", "Customer_ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Models.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("War_Number")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Warehouse");
-                });
-
-            modelBuilder.Entity("Inventory.Models.SO_Product", b =>
-                {
-                    b.HasOne("Inventory.Models.Product", "Product")
-                        .WithMany("SO_Products")
-                        .HasForeignKey("Product_Code")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Models.Supply_Order", "Supply_Order")
-                        .WithMany("SO_Products")
-                        .HasForeignKey("SO_Number")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Supply_Order");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Supply_Order", b =>
-                {
-                    b.HasOne("Inventory.Models.Supplier", "Supplier")
-                        .WithOne("Supply_Order")
-                        .HasForeignKey("Inventory.Models.Supply_Order", "Supplier_ID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory.Models.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("War_Number")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Supplier");
-
-                    b.Navigation("Warehouse");
-                });
-
             modelBuilder.Entity("Inventory.Models.Warehouse", b =>
                 {
                     b.HasOne("Inventory.Models.User", "Manager")
@@ -427,19 +228,19 @@ namespace Inventory.Migrations
             modelBuilder.Entity("Inventory.Models.Warehouse_Product", b =>
                 {
                     b.HasOne("Inventory.Models.Product", "Product")
-                        .WithMany("Warehouse_Products")
+                        .WithMany("Warehouses")
                         .HasForeignKey("Product_Code")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Inventory.Models.Supplier", "Supplier")
-                        .WithMany("Warehouse_Products")
+                        .WithMany("Warehouses")
                         .HasForeignKey("Supplier_ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Inventory.Models.Warehouse", "Warehouse")
-                        .WithMany("Warehouse_Products")
+                        .WithMany("Products")
                         .HasForeignKey("War_Number")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -451,37 +252,14 @@ namespace Inventory.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("Inventory.Models.Customer", b =>
-                {
-                    b.Navigation("Release_Order")
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Inventory.Models.Product", b =>
                 {
-                    b.Navigation("RO_Products");
-
-                    b.Navigation("SO_Products");
-
-                    b.Navigation("Warehouse_Products");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Release_Order", b =>
-                {
-                    b.Navigation("RO_Products");
+                    b.Navigation("Warehouses");
                 });
 
             modelBuilder.Entity("Inventory.Models.Supplier", b =>
                 {
-                    b.Navigation("Supply_Order")
-                        .IsRequired();
-
-                    b.Navigation("Warehouse_Products");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Supply_Order", b =>
-                {
-                    b.Navigation("SO_Products");
+                    b.Navigation("Warehouses");
                 });
 
             modelBuilder.Entity("Inventory.Models.User", b =>
@@ -492,7 +270,7 @@ namespace Inventory.Migrations
 
             modelBuilder.Entity("Inventory.Models.Warehouse", b =>
                 {
-                    b.Navigation("Warehouse_Products");
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

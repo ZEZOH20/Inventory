@@ -24,6 +24,8 @@ namespace Inventory.Models
         [EnumDataType(typeof(WeightUnit),ErrorMessage = "Unit Doesn't Acceptable")]
         public required string Unit { get; set; }
 
-        public List<Warehouse_Product>? Warehouse_Product { get; set; }
+        public List<Warehouse_Product>? Warehouse_Products { get; set; }
+        public List<SO_Product> SO_Products { get; set; }
+        public List<RO_Product> RO_Products { get; set; }
     }
 }

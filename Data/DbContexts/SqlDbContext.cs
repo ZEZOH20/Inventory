@@ -12,25 +12,10 @@ namespace Inventory.Data.DbContexts
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //Stock_Product
-
-            //modelBuilder.Entity<Warehouse_Product>()
-            //    .HasOne(sp => sp.Product)
-            //    .WithMany(p => p.Warehouse_Product)
-            //    .HasForeignKey(sc => sc.Product_Code);
-
-            //modelBuilder.Entity<Warehouse_Product>()
-            //    .HasOne(sp => sp.Warehouse)
-            //    .WithMany(w => w.Warehouse_Product)
-            //    .HasForeignKey(sp => sp.War_Number);
-
-            // join table name
-
-            //modelBuilder.Entity<Warehouse_Product>().ToTable("Warehouse_Products");
-
-            //Stock_Product
-            modelBuilder.ApplyConfiguration(new WarehouseConfiguration());
-            modelBuilder.ApplyConfiguration(new Warehouse_ProductConfigration(modelBuilder));
+            modelBuilder.ApplyConfiguration(new WarehouseConfig());
+            modelBuilder.ApplyConfiguration(new Warehouse_ProductConfig(modelBuilder));
+            modelBuilder.ApplyConfiguration(new SO_ProductConfig(modelBuilder));
+            modelBuilder.ApplyConfiguration(new RO_ProductConfig(modelBuilder));
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Supplier>Suppliers { get; set; }
@@ -38,10 +23,11 @@ namespace Inventory.Data.DbContexts
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Warehouse_Product> Warehouse_Products { get; set; }
-
-        //public DbSet<Unit> Units { get; set; }
-        //public DbSet<SOP>SOPs { get; set; }S
-        //public DbSet<GI>GIs { get; set; }
+        public DbSet<Supply_Order> Supply_Orders { get; set; }
+        public DbSet<Release_Order> Release_Orders { get; set; }
+        public DbSet<SO_Product> SO_Products { get; set; }
+        public DbSet<RO_Product> RO_Product { get; set; }
+        
         //public DbSet<Transfer> Transfers { get; set; }
 
     }

@@ -6,6 +6,8 @@ using Inventory.DTO.WarehouseDto.Requests;
 using Inventory.DTO.WarehouseDto.Validations;
 using Microsoft.EntityFrameworkCore;
 using Inventory.DTO.WarehouseDto.Responses;
+using Inventory.DTO.Warehouse_ProductDto.Responses;
+using Inventory.DTO.ProductDto.Responses;
 namespace Inventory.Controllers
 {
     [ApiController]
@@ -32,22 +34,34 @@ namespace Inventory.Controllers
             try
             {
                 var warhouses = _conn.Warehouses
-                    .Select(w=>new WarehouseResponseDTO
-                    {
-                        Number = w.Number,
-                        Name = w.Name,
-                        Region = w.Region,
-                        City = w.City,
-                        Street = w.Street,
-                        Manager = new UserResponseDTO
+                        .Select(w => new WarehouseResponseDTO
                         {
-                            Id = w.Manager.Id,
-                            Name = w.Manager.Name,
-                            Phone = w.Manager.Phone,
-                            Mail = w.Manager.Mail
-                        }
-                    })
-                    .ToList();
+                            Number = w.Number,
+                            Name = w.Name,
+                            Region = w.Region,
+                            City = w.City,
+                            Street = w.Street,
+                            Manager = new UserResponseDTO
+                            {
+                                Id = w.Manager.Id,
+                                Name = w.Manager.Name,
+                                Phone = w.Manager.Phone,
+                                Mail = w.Manager.Mail
+                            },
+                            Warehouse_Products = w.Warehouse_Products.Select(wp => new Warehouse_ProductResponseDTO
+                            {
+                                EXP = wp.EXP,
+                                MFD = wp.MFD,
+                                SupplierName = wp.Supplier.Name,
+                                Product = new ProductResponseDTO
+                                {
+                                    Name = wp.Product.Name,
+                                    Code = wp.Product.Code,
+                                    Unit = wp.Product.Unit
+                                }
+                            }).ToList()
+                        })
+                        .ToList();
 
                 return Ok(warhouses);
             }
