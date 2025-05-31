@@ -5,6 +5,7 @@ namespace Inventory.Data.Configrations
 {
     public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
     {
+       
         public void Configure(EntityTypeBuilder<Warehouse> builder)
         {
             // Each warehouse has only one manager

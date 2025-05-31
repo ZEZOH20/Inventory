@@ -1,19 +1,11 @@
 ﻿using Inventory.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using Inventory.DTO;
-using Inventory.Services;
-using Inventory.DTO.UserDto.Requests;
 using Inventory.DTO.UserDto.Responses;
-using FluentValidation;
-using Inventory.DTO.UserDto.Validations;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Inventory.Data.DbContexts;
 using Inventory.DTO.WarehouseDto.Requests;
 using Inventory.DTO.WarehouseDto.Validations;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Inventory.DTO.WarehouseDto.Responses;
 namespace Inventory.Controllers
 {
     [ApiController]
@@ -39,7 +31,22 @@ namespace Inventory.Controllers
         {
             try
             {
-                var warhouses = _conn.Warehouses.Select(w=>w)
+                var warhouses = _conn.Warehouses
+                    .Select(w=>new WarehouseResponseDTO
+                    {
+                        Number = w.Number,
+                        Name = w.Name,
+                        Region = w.Region,
+                        City = w.City,
+                        Street = w.Street,
+                        Manager = new UserResponseDTO
+                        {
+                            Id = w.Manager.Id,
+                            Name = w.Manager.Name,
+                            Phone = w.Manager.Phone,
+                            Mail = w.Manager.Mail
+                        }
+                    })
                     .ToList();
 
                 return Ok(warhouses);

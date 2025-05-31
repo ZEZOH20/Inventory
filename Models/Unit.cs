@@ -2,7 +2,7 @@
 
 namespace Inventory.Models
 {
-    public enum WeightUnit
+    public enum WUnit
     {
         Kilogram,
         Ton,
@@ -16,7 +16,7 @@ namespace Inventory.Models
     {
         public int Id { get; set; }
 
-        [EnumDataType(typeof(WeightUnit))]
+        [EnumDataType(typeof(WUnit))]
         public required string Name { get; set; }
     }
 }

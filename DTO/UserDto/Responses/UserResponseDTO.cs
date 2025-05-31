@@ -5,6 +5,7 @@ namespace Inventory.DTO.UserDto.Responses
 {
     public class UserResponseDTO
     {
+        public UserResponseDTO() { }
         public UserResponseDTO(User user)
         {
             Id = user.Id;   

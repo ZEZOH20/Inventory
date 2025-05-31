@@ -14,6 +14,9 @@ namespace Inventory.Models
         [ForeignKey("Warehouse")]
         public int War_Number { get; set; }
 
+        [ForeignKey("Supplier")]
+        public int Supplier_ID { get; set; }
+
         [Required(ErrorMessage = "Please add Manufacturing (MD) Date")]
         [DataType(DataType.Date)]
         public DateTime MFD { get; set; }
@@ -23,18 +26,19 @@ namespace Inventory.Models
         public DateTime EXP { get; set; }
 
         [DataType(DataType.Date)]
-        public DateTime Supply_Date { get; set; } //
-
-        public required int Supplier_ID{ get; set; }
-
+        public DateTime Store_Date { get; set; } //
 
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
-        public double Price { get; set; }
-        public double Amount { get; set; } //
+        public double Total_Amount { get; set; } //
 
+        [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
+        public double Total_Price { get; set; }
+
+        
+        //Navigation
         public Product Product { get; set; }
         public Warehouse Warehouse { get; set; }
-   
+        public Supplier Supplier { get; set; }
 
     }
 }
