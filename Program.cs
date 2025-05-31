@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Inventory.DTO.UserDto.Requests;
+using Inventory.DTO.WarehouseDto.Validations;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,9 @@ builder.Services.AddScoped<ISupplierCrudService, SupplierCrudService>();
 //Automatic Registeration
 builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UserCreateDTOValidator>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<WarehouseCreateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<WarehouseUpdateDTOValidator>();
 //builder.Services.AddScoped<IValidator<UserUpdateDTO>, UserUpdateDTOValidator>();
 // Register Custom Services .....
 

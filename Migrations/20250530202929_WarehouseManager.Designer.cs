@@ -3,6 +3,7 @@ using Inventory.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Inventory.Migrations
 {
     [DbContext(typeof(SqlDbContext))]
-    partial class SqlDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250530202929_WarehouseManager")]
+    partial class WarehouseManager
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -123,9 +126,6 @@ namespace Inventory.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ManagerId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -140,27 +140,7 @@ namespace Inventory.Migrations
 
                     b.HasKey("Number");
 
-                    b.HasIndex("ManagerId")
-                        .IsUnique();
-
                     b.ToTable("Warehouses");
-                });
-
-            modelBuilder.Entity("Inventory.Models.Warehouse", b =>
-                {
-                    b.HasOne("Inventory.Models.User", "Manager")
-                        .WithOne("Warehouse")
-                        .HasForeignKey("Inventory.Models.Warehouse", "ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Manager");
-                });
-
-            modelBuilder.Entity("Inventory.Models.User", b =>
-                {
-                    b.Navigation("Warehouse")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

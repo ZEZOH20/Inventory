@@ -5,6 +5,6 @@ namespace Inventory.Models
 {
     public class User : Person
     {
-       
+       public Warehouse Warehouse { get; set; } //Navigation
     }
 }

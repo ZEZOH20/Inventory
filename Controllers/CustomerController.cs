@@ -97,7 +97,7 @@ namespace Inventory.Controllers
             }
         }
         [HttpDelete("delete/{id}")]
-        public IActionResult UpdateBYId(int id)
+        public IActionResult Delete(int id)
         {
             //validate ID
             if (id <= 0)

@@ -1,4 +1,5 @@
-﻿using Inventory.Models;
+﻿using Inventory.Data.Configrations;
+using Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Data.DbContexts
@@ -28,11 +29,12 @@ namespace Inventory.Data.DbContexts
             //modelBuilder.Entity<Warehouse_Product>().ToTable("Warehouse_Products");
 
             //Stock_Product
+            modelBuilder.ApplyConfiguration(new WarehouseConfiguration());
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Supplier>Suppliers { get; set; }
         public DbSet<Customer> Customers { get; set; }
-        //public DbSet<Warehouse> Warehouses { get; set; }
+        public DbSet<Warehouse> Warehouses { get; set; }
         //public DbSet<Product> Products { get; set; }
         //public DbSet<Unit> Units { get; set; }
         //public DbSet<Warehouse_Product> Warehouse_Products { get; set; }
