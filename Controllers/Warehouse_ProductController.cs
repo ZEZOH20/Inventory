@@ -4,6 +4,7 @@ using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.DTO.WarehouseDto.Requests;
 using Inventory.DTO.WarehouseDto.Validations;
 using Inventory.Models;
+using Inventory.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,75 +16,20 @@ namespace Inventory.Controllers
     public class Warehouse_ProductController:ControllerBase
     {
         readonly SqlDbContext _conn;
-        public Warehouse_ProductController(SqlDbContext conn)
-        {
-            _conn = conn;   
+        readonly IWarehouse_ProductService _Warehouse_ProductService;
+        public Warehouse_ProductController(
+            SqlDbContext conn,
+            IWarehouse_ProductService Warehouse_ProductService
+            ){
+            _conn = conn;
+            _Warehouse_ProductService = Warehouse_ProductService;
         }
 
         [HttpPost("create")]
         public IActionResult Create([FromBody] Warehouse_ProductCreateDTO dto)
-        {
+            => Ok(_Warehouse_ProductService.CreateWarehouse_Product(dto));
 
-            //validation
-            if (!dto.Valid())
-                return BadRequest($"check: \n" +
-                    $"Product_Code,\n" +
-                    $"War_Number,\n" +
-                    $"Amount,\n" +
-                    $"Price,\n" +
-                    $"greater than > 0 \n\n" +
-                    $"MFD , EXP , EXP are Date Type");
 
-            if (!CreationIsValid(dto))
-                return BadRequest($"Supplier_ID or \n " +
-                    $"Product_Code or \n " +
-                    $"Warehouse_Number \n  " +
-                    "can't found check them and try later");
-
-                // Parse and validate dates
-                DateTime mfdDate = DateTime.Parse(dto.MFD);
-                DateTime expDate = DateTime.Parse(dto.EXP);
-            if (expDate <= mfdDate)
-                return BadRequest($"EXP Date : {expDate} \n " +
-                    $"can't be less than or equal\n" +
-                    $"MFD Date : {mfdDate}");
-            //validation
-
-            try
-            {
-                var existingProduct = ProductExistInWarehouse(dto);
-
-                if (existingProduct is not null)
-                {
-                    existingProduct.Total_Amount += dto.Amount;
-                    existingProduct.Total_Price += dto.Amount * dto.Price;
-                }
-                else
-                {
-                  
-
-                    _conn.Warehouse_Products.Add(new Warehouse_Product
-                    {
-                        War_Number = dto.War_Number,
-                        Product_Code = dto.Product_Code,
-                        Supplier_ID = dto.Supplier_ID,
-                        MFD = mfdDate,
-                        EXP = expDate,
-                        Store_Date = DateTime.UtcNow,
-                        Total_Amount = dto.Amount,
-                        Total_Price = dto.Amount * dto.Price,
-                    });
-                }
-                _conn.SaveChanges();
-
-                return Ok("Product in Warehouse Created successfully");
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Can't Create Product in Warehouse" + ex.Message);
-            }
-        }
         [HttpPut("Update")]
         public IActionResult UpdateBYId([FromBody] Warehouse_ProductUpdateDTO dto)
         {
@@ -172,30 +118,6 @@ namespace Inventory.Controllers
             return true;
         }
 
-        bool CreationIsValid(Warehouse_ProductCreateDTO dto)
-        {
-            var SupplierExists = _conn.Suppliers.Any(s => s.Id == dto.Supplier_ID);
-            var ProductExists = _conn.Products.Any(p => p.Code == dto.Product_Code);
-            var WarehouseExists = _conn.Warehouses.Any(w => w.Number == dto.War_Number);
-
-            if (!SupplierExists ||
-                !ProductExists ||
-                !WarehouseExists
-                )
-                return false;
-
-            return true;
-        }
-
-        Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto)
-           => _conn.Warehouse_Products.FirstOrDefault(wp =>
-              wp.Supplier_ID == dto.Supplier_ID &&
-              wp.Product_Code== dto.Product_Code &&
-              wp.War_Number==dto.War_Number &&
-              wp.EXP == DateTime.Parse(dto.MFD) &&
-              wp.MFD == DateTime.Parse(dto.MFD)
-           );
-
-
+      
     }
 }

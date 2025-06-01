@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.Text.Json.Serialization;
 
 namespace Inventory.DTO.Warehouse_ProductDto.Requests
 {
@@ -23,8 +24,8 @@ namespace Inventory.DTO.Warehouse_ProductDto.Requests
                     (Supplier_ID > 0) &&
                     (Amount > 0) &&
                     (Price > 0) &&
-                   (MFD != default) &&
-                   (EXP != default); // MFD should be before EXP
+                   (!MFD.IsNullOrEmpty()) &&
+                   (!EXP.IsNullOrEmpty()); // MFD should be before EXP
 
 
         }

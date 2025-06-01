@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Inventory.DTO.UserDto.Requests;
 using Inventory.DTO.WarehouseDto.Validations;
+using Inventory.DTO.SupplyOrderDto.Validations;
+using Inventory.DTO.SO_ProductDto.Validators;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +28,7 @@ builder.Services.AddDbContext<SqlDbContext>(
 builder.Services.AddScoped<IUserCrudService, UserCrudService>();
 builder.Services.AddScoped<ICustomerCrudService, CustomerCrudService>();
 builder.Services.AddScoped<ISupplierCrudService, SupplierCrudService>();
+builder.Services.AddScoped<IWarehouse_ProductService, Warehouse_ProductService>();
 
 //Automatic Registeration
 builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateDTOValidator>();
@@ -33,6 +36,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<UserCreateDTOValidator>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<WarehouseCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<WarehouseUpdateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SupplyOrderCreateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SO_ProductCreateDTOValidator>();
 //builder.Services.AddScoped<IValidator<UserUpdateDTO>, UserUpdateDTOValidator>();
 // Register Custom Services .....
 

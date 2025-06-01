@@ -50,6 +50,12 @@ namespace Inventory.Controllers
                             },
                             Warehouse_Products = w.Warehouse_Products.Select(wp => new Warehouse_ProductResponseDTO
                             {
+                                Id=wp.Id,
+                                War_Number= wp.War_Number,
+                                Product_Code = wp.Product_Code,
+                                Supplier_ID = wp.Supplier_ID,
+                                Total_Amount = wp.Total_Amount,
+                                Total_Price = wp.Total_Price,
                                 EXP = wp.EXP,
                                 MFD = wp.MFD,
                                 SupplierName = wp.Supplier.Name,
