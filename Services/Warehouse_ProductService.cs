@@ -1,6 +1,7 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Services
 {
@@ -8,6 +9,7 @@ namespace Inventory.Services
         string CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
         bool CreationIsValid(Warehouse_ProductCreateDTO dto);
          Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate);
+        Warehouse_Product Delete(int Id);
     }
     public class Warehouse_ProductService : IWarehouse_ProductService
     {
@@ -16,6 +18,8 @@ namespace Inventory.Services
         {
             _conn = conn;
         }
+
+       
         public string CreateWarehouse_Product(Warehouse_ProductCreateDTO dto)
         {
 
@@ -106,6 +110,43 @@ namespace Inventory.Services
             wp.MFD == mfdDate
          );
 
+        public Warehouse_Product Delete(int Id)
+        {
      
+            try
+            {
+
+
+                var Warehouse_Product = _conn.Warehouse_Products
+                    .Include(wp => wp.Product) // Include navigation property
+                    .FirstOrDefault(wp => wp.Id == Id);
+                if(Warehouse_Product == null)
+                    throw new Exception();
+
+                // Create a copy BEFORE deleting it
+                var warehouseProductCopy = new Warehouse_Product
+                {
+                    Id = Warehouse_Product.Id,
+                    War_Number = Warehouse_Product.War_Number,
+                    Product_Code = Warehouse_Product.Product_Code,
+                    Supplier_ID = Warehouse_Product.Supplier_ID,
+                    MFD = Warehouse_Product.MFD,
+                    EXP = Warehouse_Product.EXP,
+                    Store_Date = Warehouse_Product.Store_Date,
+                    Total_Amount = Warehouse_Product.Total_Amount,
+                    Total_Price = Warehouse_Product.Total_Price,
+                    Product = Warehouse_Product.Product // assign the Product reference too
+                };
+
+                _conn.Warehouse_Products.Remove(Warehouse_Product);
+                _conn.SaveChanges();
+
+                return warehouseProductCopy;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Can't delete Product in Warehouse" + ex.Message);
+            }
+        }
     }
 }
