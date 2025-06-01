@@ -22,6 +22,23 @@ namespace Inventory.Controllers
             _CreateDTOValidator= CreateDTOValidator;    
         }
 
+        [HttpGet("getAll")]
+        public IActionResult GetAll()
+        {
+            try
+            {
+                var products = _conn.Supply_Orders.Select(s => s)
+                    .ToList();
+
+                return Ok(products);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Can't get Supply orders" + ex.Message);
+            }
+        }
+
         [HttpPost("create")]
         public IActionResult Create([FromBody] SupplyOrderCreateDTO dto)
         {

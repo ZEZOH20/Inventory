@@ -31,6 +31,23 @@ namespace Inventory.Controllers
             _Warehouse_ProductService = Warehouse_ProductService;
         }
 
+        [HttpGet("getAll")]
+        public IActionResult GetAll()
+        {
+            try
+            {
+                var products = _conn.RO_Product.Select(s => s)
+                    .ToList();
+
+                return Ok(products);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Can't get release order products" + ex.Message);
+            }
+        }
+
         [HttpPost("create")]
         public IActionResult Create([FromBody] RO_ProductCreateDTO dto)
         {
