@@ -9,6 +9,7 @@ using Inventory.DTO.WarehouseDto.Validations;
 using Inventory.DTO.SupplyOrderDto.Validations;
 using Inventory.DTO.SO_ProductDto.Validators;
 using Inventory.DTO.ReleaseOrderDto.Validators;
+using backend.DTO.TransferOrderDto.Validations;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,8 +51,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<UserCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<WarehouseCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<WarehouseUpdateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<SupplyOrderCreateDTOValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<SO_ProductCreateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<TransferOrderCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReleaseOrderCreateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SO_ProductCreateDTOValidator>();
 //builder.Services.AddScoped<IValidator<UserUpdateDTO>, UserUpdateDTOValidator>();
 // Register Custom Services .....
 

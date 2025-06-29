@@ -9,6 +9,7 @@ namespace Inventory.Services
         string CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
         bool CreationIsValid(Warehouse_ProductCreateDTO dto);
          Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate);
+        Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate);
         Warehouse_Product Delete(int Id);
     }
     public class Warehouse_ProductService : IWarehouse_ProductService
@@ -50,7 +51,8 @@ namespace Inventory.Services
 
             try
             {
-                var existingProduct = ProductExistInWarehouse(dto , mfdDate , expDate);
+                var existingProduct = ProductExistInWarehouse(dto, mfdDate , expDate);
+                //var existingProduct = ProductExistInWarehouse(dto.Supplier_ID, dto.Product_Code, dto.War_Number, mfdDate , expDate);
 
                 if (existingProduct is not null)
                 {
@@ -99,9 +101,9 @@ namespace Inventory.Services
             return true;
         }
 
-       
 
-        public Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto , DateTime mfdDate , DateTime expDate)
+
+        public Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate)
          => _conn.Warehouse_Products.FirstOrDefault(wp =>
             wp.Supplier_ID == dto.Supplier_ID &&
             wp.Product_Code == dto.Product_Code &&
@@ -110,6 +112,14 @@ namespace Inventory.Services
             wp.MFD == mfdDate
          );
 
+        public Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate)
+      => _conn.Warehouse_Products.Include(wp=>wp.Product).FirstOrDefault(wp =>
+         wp.Supplier_ID == Supplier_ID &&
+         wp.Product_Code == Product_Code &&
+         wp.War_Number == War_Number &&
+         wp.EXP == expDate &&
+         wp.MFD == mfdDate
+      );
         public Warehouse_Product Delete(int Id)
         {
      

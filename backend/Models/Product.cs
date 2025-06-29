@@ -1,4 +1,5 @@
 ﻿
+using backend.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -27,5 +28,6 @@ namespace Inventory.Models
         public List<Warehouse_Product>? Warehouse_Products { get; set; }
         public List<SO_Product> SO_Products { get; set; }
         public List<RO_Product> RO_Products { get; set; }
+        public List<TO_Product> TO_Products { get; set; }
     }
 }
