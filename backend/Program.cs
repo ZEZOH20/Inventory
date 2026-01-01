@@ -1,10 +1,8 @@
 using Inventory.Data.DbContexts;
 using Inventory.DTO.UserDto.Validations;
 using Inventory.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
-using Inventory.DTO.UserDto.Requests;
 using Inventory.DTO.WarehouseDto.Validations;
 using Inventory.DTO.SupplyOrderDto.Validations;
 using Inventory.DTO.SO_ProductDto.Validators;
