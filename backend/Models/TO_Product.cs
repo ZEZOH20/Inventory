@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Inventory.Models
 {
-    public class TO_Product
+    public class TO_Product : AuditableEntity
     {
         public int Id { get; set; }
 

@@ -15,7 +15,7 @@ namespace Inventory.Models
         Liter,
         Piece
     }
-    public class Product
+    public class Product : AuditableEntity
     {
         [Key]
         public int Code { get; set; }

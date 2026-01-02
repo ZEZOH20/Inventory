@@ -2,7 +2,7 @@
 
 namespace Inventory.Models
 {
-    public class Person
+    public class Person : AuditableEntity
     {
         public int Id { get; set; }
         public string Name { get; set; }

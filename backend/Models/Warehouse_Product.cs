@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Inventory.Models
 {
-    public class Warehouse_Product
+    public class Warehouse_Product : AuditableEntity
     {
         public int Id { get; set; }
 

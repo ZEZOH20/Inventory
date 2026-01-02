@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Inventory.Models
 {
-    public class Supply_Order
+    public class Supply_Order : AuditableEntity
     {
         [Key]
         public int Number { get; set; }

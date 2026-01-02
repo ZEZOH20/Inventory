@@ -19,6 +19,7 @@ using Inventory.DTO.AuthDtos.Validators;
 using Inventory.Services.Auth;
 using Inventory.Models;
 using Inventory.Shares;
+using Inventory.Services.CurrentUser;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,9 @@ builder.Services.AddScoped<IWarehouse_ProductService, Warehouse_ProductService>(
 // Auth Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
 
 // Register Repository and Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

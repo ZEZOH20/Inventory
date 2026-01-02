@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Inventory.Models
 {
-    public class SO_Product
+    public class SO_Product : AuditableEntity
     {
         public int Id {  get; set; }
 

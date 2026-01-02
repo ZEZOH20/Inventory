@@ -9,6 +9,7 @@ using Inventory.DTO.WarehouseDto.Responses;
 using Inventory.DTO.Warehouse_ProductDto.Responses;
 using Inventory.DTO.ProductDto.Responses;
 using Microsoft.AspNetCore.Authorization;
+using Inventory.Services.CurrentUser;
 namespace Inventory.Controllers
 {
     [Authorize(Roles = "Owner,Manager")]
@@ -19,15 +20,18 @@ namespace Inventory.Controllers
         readonly SqlDbContext _conn;
         readonly WarehouseCreateDTOValidator _CreateDTOValidator;
         readonly WarehouseUpdateDTOValidator _UpdateDTOValidator;
+        readonly ICurrentUser _currentUser;
         public WarehouseController(
             SqlDbContext conn
             , WarehouseCreateDTOValidator CreateDTOValidator,
-              WarehouseUpdateDTOValidator UpdateDTOValidator
+              WarehouseUpdateDTOValidator UpdateDTOValidator,
+              ICurrentUser currentUser
             )
         {
             _CreateDTOValidator = CreateDTOValidator;
             _UpdateDTOValidator = UpdateDTOValidator;
             _conn = conn;
+            _currentUser = currentUser;
 
         }
         [HttpGet("getAll")]
@@ -36,6 +40,7 @@ namespace Inventory.Controllers
             try
             {
                 var warhouses = _conn.Warehouses
+                        .Where(w => !w.IsDeleted)
                         .Select(w => new WarehouseResponseDTO
                         {
                             Number = w.Number,
@@ -47,8 +52,8 @@ namespace Inventory.Controllers
                             {
                                 Id = w.Manager.Id,
                                 Name = w.Manager.Name,
-                                Phone = w.Manager.Phone,
-                                Mail = w.Manager.Email
+                                Phone = w.Manager.Phone ?? "",
+                                Mail = w.Manager.Email ?? ""
                             },
                             Warehouse_Products = w.Warehouse_Products.Select(wp => new Warehouse_ProductResponseDTO
                             {
@@ -97,14 +102,16 @@ namespace Inventory.Controllers
                     return BadRequest(result);
 
 
-                _conn.Warehouses.Add(new Warehouse
+                var warehouse = new Warehouse
                 {
                     Name = dto.Name,
                     Region = dto.Region,
                     City = dto.City,
                     Street = dto.Street,
                     ManagerId = dto.ManagerId
-                });
+                };
+                warehouse.SetCreated(_currentUser.UserId, _currentUser.GetUserIp());
+                _conn.Warehouses.Add(warehouse);
                 _conn.SaveChanges();
 
                 return Ok("Warehouse Created successfully");
@@ -165,10 +172,10 @@ namespace Inventory.Controllers
                 if (Warehouse == null)
                     return BadRequest($"the Warehouse Number {number} not found ");
 
-                _conn.Warehouses.Remove(Warehouse);
+                Warehouse.SoftDelete(_currentUser.UserId, _currentUser.GetUserIp());
                 _conn.SaveChanges();
 
-                return Ok("Warehouse deleted successfully");
+                return Ok("Warehouse soft deleted successfully");
             }
             catch (Exception ex)
             {
@@ -186,6 +193,7 @@ namespace Inventory.Controllers
 
             // Check if manager already assigned to another warehouse
             var existingWarehouse = _conn.Warehouses
+            .Where(w => !w.IsDeleted)
             .Include(w => w.Manager)
             .FirstOrDefault(w => w.ManagerId == ManagerId);
 
@@ -223,6 +231,7 @@ namespace Inventory.Controllers
             if (!string.IsNullOrEmpty(dto.ManagerId))
                 warehouse.ManagerId = dto.ManagerId;
 
+            warehouse.SetUpdated(_currentUser.UserId, _currentUser.GetUserIp());
             _conn.SaveChanges();
 
             return true;
