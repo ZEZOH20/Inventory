@@ -8,9 +8,9 @@ namespace Inventory.DTO.WarehouseDto.Validations
     {
         public WarehouseCreateDTOValidator()
         {
-           RuleFor(x => x.Name)
-          .NotEmpty().WithMessage("Name is required")
-          .MaximumLength(100).WithMessage("Name cannot exceed 100 characters");
+            RuleFor(x => x.Name)
+           .NotEmpty().WithMessage("Name is required")
+           .MaximumLength(100).WithMessage("Name cannot exceed 100 characters");
 
             RuleFor(x => x.Region)
                 .NotEmpty().WithMessage("Region is required")
@@ -25,9 +25,8 @@ namespace Inventory.DTO.WarehouseDto.Validations
                 .MaximumLength(100).WithMessage("Street cannot exceed 100 characters");
 
             RuleFor(x => x.ManagerId)
-                .NotEmpty().WithMessage("Manager ID is required")
-                .GreaterThan(0).WithMessage("Manager ID must be greater than 0");
+                .NotEmpty().WithMessage("Manager ID is required");
         }
-      }
     }
+}
 

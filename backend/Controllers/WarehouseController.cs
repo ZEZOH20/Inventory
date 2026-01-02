@@ -8,8 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using Inventory.DTO.WarehouseDto.Responses;
 using Inventory.DTO.Warehouse_ProductDto.Responses;
 using Inventory.DTO.ProductDto.Responses;
+using Microsoft.AspNetCore.Authorization;
 namespace Inventory.Controllers
 {
+    [Authorize(Roles = "Owner,Manager")]
     [ApiController]
     [Route("api/[Controller]")]
     public class WarehouseController : ControllerBase
@@ -19,14 +21,14 @@ namespace Inventory.Controllers
         readonly WarehouseUpdateDTOValidator _UpdateDTOValidator;
         public WarehouseController(
             SqlDbContext conn
-            ,WarehouseCreateDTOValidator CreateDTOValidator,
+            , WarehouseCreateDTOValidator CreateDTOValidator,
               WarehouseUpdateDTOValidator UpdateDTOValidator
             )
         {
             _CreateDTOValidator = CreateDTOValidator;
             _UpdateDTOValidator = UpdateDTOValidator;
             _conn = conn;
-           
+
         }
         [HttpGet("getAll")]
         public IActionResult GetAll()
@@ -46,12 +48,12 @@ namespace Inventory.Controllers
                                 Id = w.Manager.Id,
                                 Name = w.Manager.Name,
                                 Phone = w.Manager.Phone,
-                                Mail = w.Manager.Mail
+                                Mail = w.Manager.Email
                             },
                             Warehouse_Products = w.Warehouse_Products.Select(wp => new Warehouse_ProductResponseDTO
                             {
-                                Id=wp.Id,
-                                War_Number= wp.War_Number,
+                                Id = wp.Id,
+                                War_Number = wp.War_Number,
                                 Product_Code = wp.Product_Code,
                                 Supplier_ID = wp.Supplier_ID,
                                 Total_Amount = wp.Total_Amount,
@@ -88,7 +90,7 @@ namespace Inventory.Controllers
             try
             {
 
-               // Check if manager already assigned to another warehouse
+                // Check if manager already assigned to another warehouse
                 string result = CheckWarehouseManaged(dto.ManagerId);
                 bool WarehouseManaged = !string.IsNullOrEmpty(result);
                 if (WarehouseManaged)
@@ -127,12 +129,10 @@ namespace Inventory.Controllers
             {
                 //check if manager id enterd
                 if (string.IsNullOrEmpty(dto.ManagerId))
-                     return BadRequest("ManagerId can't be null");
-                
-                int ManagerId = int.Parse(dto.ManagerId);
+                    return BadRequest("ManagerId can't be null");
 
                 // Check if manager already assigned to another warehouse
-                string message = CheckWarehouseManaged(ManagerId);
+                string message = CheckWarehouseManaged(dto.ManagerId);
                 bool WarehouseManaged = !string.IsNullOrEmpty(message);
                 if (WarehouseManaged)
                     return BadRequest(message);
@@ -150,7 +150,7 @@ namespace Inventory.Controllers
                 return BadRequest("Can't Update Warehouse" + ex.Message);
             }
         }
-  
+
         [HttpDelete("delete/{number}")]
         public IActionResult Delete(int number)
         {
@@ -165,7 +165,7 @@ namespace Inventory.Controllers
                 if (Warehouse == null)
                     return BadRequest($"the Warehouse Number {number} not found ");
 
-                 _conn.Warehouses.Remove(Warehouse);
+                _conn.Warehouses.Remove(Warehouse);
                 _conn.SaveChanges();
 
                 return Ok("Warehouse deleted successfully");
@@ -176,7 +176,7 @@ namespace Inventory.Controllers
             }
         }
 
-      string CheckWarehouseManaged(int ManagerId)
+        string CheckWarehouseManaged(string ManagerId)
         {
             //check if Manager is Exists
             var ManagerExists = _conn.Users.Any(m => m.Id == ManagerId);
@@ -200,7 +200,7 @@ namespace Inventory.Controllers
             }
             return "";
         }
-         bool UpdateWarehouse(WarehouseUpdateDTO dto)
+        bool UpdateWarehouse(WarehouseUpdateDTO dto)
         {
             var warehouse = _conn.Warehouses.FirstOrDefault(w => w.Number == dto.Number);
 
@@ -221,7 +221,7 @@ namespace Inventory.Controllers
                 warehouse.City = dto.City;
 
             if (!string.IsNullOrEmpty(dto.ManagerId))
-                warehouse.ManagerId = int.Parse(dto.ManagerId);
+                warehouse.ManagerId = dto.ManagerId;
 
             _conn.SaveChanges();
 

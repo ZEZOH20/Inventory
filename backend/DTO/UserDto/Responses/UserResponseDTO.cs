@@ -6,38 +6,38 @@ namespace Inventory.DTO.UserDto.Responses
     public class UserResponseDTO
     {
         public UserResponseDTO() { }
-        public UserResponseDTO(User user)
-        {
-            Id = user.Id;   
-            Name = user.Name;
-            Phone = user.Phone;
-            Fax = user.Fax ?? "No Fax";  
-            Mail = user.Mail;
-            Domain = user.Domain ?? "No Domain";  
-        }
-        public UserResponseDTO(Customer user)
+        public UserResponseDTO(ApplicationUser user)
         {
             Id = user.Id;
             Name = user.Name;
-            Phone = user.Phone;
+            Phone = user.PhoneNumber;
+            Fax = "No Fax";  // ApplicationUser doesn't have Fax
+            Mail = user.Email;
+            Domain = "No Domain";  // ApplicationUser doesn't have Domain
+        }
+        public UserResponseDTO(Customer user)
+        {
+            Id = user.Id.ToString();
+            Name = user.Name;
+            Phone = user.Phone.ToString();
             Fax = user.Fax ?? "No Fax";
             Mail = user.Mail;
             Domain = user.Domain ?? "No Domain";
         }
         public UserResponseDTO(Supplier user)
         {
-            Id = user.Id;
+            Id = user.Id.ToString();
             Name = user.Name;
-            Phone = user.Phone;
+            Phone = user.Phone.ToString();
             Fax = user.Fax ?? "No Fax";
             Mail = user.Mail;
             Domain = user.Domain ?? "No Domain";
         }
-        public int Id { get; set; }
-        public  string Name { get; set; }
-        public int Phone { get; set; }
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Phone { get; set; }
         public string Fax { get; set; } = "No Fax";
-        public  string Mail { get; set; }
+        public string Mail { get; set; }
         public string Domain { get; set; } = "No Domain";
     }
 }

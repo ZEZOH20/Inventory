@@ -3,10 +3,11 @@
 using Inventory.Data.Configrations;
 using Inventory.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Inventory.Data.DbContexts
 {
-    public class SqlDbContext : DbContext
+    public class SqlDbContext : IdentityDbContext<ApplicationUser>
     {
         public SqlDbContext(DbContextOptions<SqlDbContext> options) : base(options)
         {
@@ -14,6 +15,8 @@ namespace Inventory.Data.DbContexts
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder); // Important for Identity
+
             modelBuilder.ApplyConfiguration(new WarehouseConfig());
             modelBuilder.ApplyConfiguration(new Warehouse_ProductConfig(modelBuilder));
             modelBuilder.ApplyConfiguration(new SO_ProductConfig(modelBuilder));
@@ -26,7 +29,7 @@ namespace Inventory.Data.DbContexts
              .HasForeignKey(t => t.From)
              .OnDelete(DeleteBehavior.Restrict);
         }
-        public DbSet<User> Users { get; set; }
+        // Removed DbSet<User> as it's now ApplicationUser via Identity
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }

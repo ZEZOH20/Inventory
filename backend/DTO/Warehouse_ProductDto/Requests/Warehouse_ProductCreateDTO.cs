@@ -24,8 +24,8 @@ namespace Inventory.DTO.Warehouse_ProductDto.Requests
                     (Supplier_ID > 0) &&
                     (Amount > 0) &&
                     (Price > 0) &&
-                   (!MFD.IsNullOrEmpty()) &&
-                   (!EXP.IsNullOrEmpty()); // MFD should be before EXP
+                   (!string.IsNullOrEmpty(MFD)) &&
+                   (!string.IsNullOrEmpty(EXP)); // MFD should be before EXP
 
 
         }

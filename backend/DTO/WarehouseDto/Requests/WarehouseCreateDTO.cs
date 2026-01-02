@@ -9,6 +9,6 @@ namespace Inventory.DTO.WarehouseDto.Requests
         public string Region { get; set; }
         public string City { get; set; }
         public string Street { get; set; }
-        public int ManagerId { get; set; }
+        public string ManagerId { get; set; }
     }
 }
