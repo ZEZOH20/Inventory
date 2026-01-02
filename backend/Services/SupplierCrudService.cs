@@ -1,49 +1,64 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.UserDto.Requests;
+using Inventory.Interfaces;
 using Inventory.Models;
+using Inventory.Shares;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace Inventory.Services
 {
-    public interface ISupplierCrudService
+    public interface ISupplierCrudService : IPersonCrudService<Supplier>
     {
-        IEnumerable<Supplier> SelectAll();
-        bool UpdateById(UserUpdateDTO dto);
-        bool CheckExistByMail(UserCreateDTO dto);
-        bool Delete(int id);
+        Response<PaginatedResponse<Supplier>> SelectAll(int page = 1, int pageSize = 10);
+        Response<bool> UpdateById(UserUpdateDTO dto);
+        Response<bool> CheckExistByMail(UserCreateDTO dto);
+        Response<bool> Delete(int id);
 
-        void Create(UserCreateDTO dto);
+        Response<Supplier> Create(UserCreateDTO dto);
     }
     public class SupplierCrudService : ISupplierCrudService
     {
-        readonly SqlDbContext _conn;
-        public SupplierCrudService(SqlDbContext conn)
+        readonly IUnitOfWork _unitOfWork;
+        public SupplierCrudService(IUnitOfWork unitOfWork)
         {
-            _conn = conn;
+            _unitOfWork = unitOfWork;
         }
-        public IEnumerable<Supplier> SelectAll() => _conn.Suppliers.Select(u => u);
-
-        public bool CheckExistByMail(UserCreateDTO dto) => _conn.Suppliers.Any(u => u.Mail == dto.Mail);
-
-        public void Create(UserCreateDTO dto)
+        public Response<PaginatedResponse<Supplier>> SelectAll(int page = 1, int pageSize = 10)
         {
-            _conn.Suppliers.Add(new Supplier
+            var query = _unitOfWork.Suppliers.GetQuery();
+            var totalCount = query.Count();
+            var suppliers = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var paginated = new PaginatedResponse<Supplier>(suppliers, page, pageSize, totalCount);
+            return Response<PaginatedResponse<Supplier>>.Success(paginated);
+        }
+
+        public Response<bool> CheckExistByMail(UserCreateDTO dto)
+        {
+            var exists = _unitOfWork.Suppliers.Find(u => u.Mail == dto.Mail).Any();
+            return Response<bool>.Success(exists);
+        }
+
+        public Response<Supplier> Create(UserCreateDTO dto)
+        {
+            var supplier = new Supplier
             {
                 Name = dto.Name,
                 Domain = dto.Domain,
                 Phone = int.Parse(dto.Phone),
                 Fax = dto.Fax,
                 Mail = dto.Mail
-            });
-            _conn.SaveChanges();
+            };
+            _unitOfWork.Suppliers.Add(supplier);
+            _unitOfWork.Complete();
+            return Response<Supplier>.Success(supplier);
         }
-        public bool UpdateById(UserUpdateDTO dto)
+        public Response<bool> UpdateById(UserUpdateDTO dto)
         {
-            var supplier = _conn.Suppliers.FirstOrDefault(u => u.Id == dto.Id);
+            var supplier = _unitOfWork.Suppliers.GetById(dto.Id);
 
             if (supplier == null)
-                return false;
+                return Response<bool>.Failure("Supplier not found");
 
             // Update only provided values
             if (!string.IsNullOrEmpty(dto.Name))
@@ -61,21 +76,21 @@ namespace Inventory.Services
             if (!string.IsNullOrEmpty(dto.Domain))
                 supplier.Domain = dto.Domain;
 
-            _conn.SaveChanges();
+            _unitOfWork.Complete();
 
-            return true;
+            return Response<bool>.Success(true);
         }
 
-        public bool Delete(int id)
+        public Response<bool> Delete(int id)
         {
-            var supplier = _conn.Suppliers.FirstOrDefault(u => u.Id == id);
+            var supplier = _unitOfWork.Suppliers.GetById(id);
             if (supplier != null)
             {
-                _conn.Suppliers.Remove(supplier);
-                _conn.SaveChanges();
-                return true;
+                _unitOfWork.Suppliers.Remove(supplier);
+                _unitOfWork.Complete();
+                return Response<bool>.Success(true);
             }
-            return false;
+            return Response<bool>.Failure("Supplier not found");
         }
     }
 }

@@ -1,9 +1,8 @@
-﻿using backend.Models;
-using Inventory.Models;
+﻿using Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace backend.Data.Configrations
+namespace Inventory.Data.Configrations
 {
     public class TO_ProductConfig : IEntityTypeConfiguration<TO_Product>
     {

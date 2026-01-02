@@ -8,6 +8,8 @@ using Inventory.DTO.SupplyOrderDto.Validations;
 using Inventory.DTO.SO_ProductDto.Validators;
 using Inventory.DTO.ReleaseOrderDto.Validators;
 using backend.DTO.TransferOrderDto.Validations;
+using Inventory.Interfaces;
+using Inventory.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +43,10 @@ builder.Services.AddScoped<IUserCrudService, UserCrudService>();
 builder.Services.AddScoped<ICustomerCrudService, CustomerCrudService>();
 builder.Services.AddScoped<ISupplierCrudService, SupplierCrudService>();
 builder.Services.AddScoped<IWarehouse_ProductService, Warehouse_ProductService>();
+
+// Register Repository and Unit of Work
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 //Automatic Registeration
 builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateDTOValidator>();

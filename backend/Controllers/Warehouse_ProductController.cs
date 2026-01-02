@@ -13,21 +13,27 @@ namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
-    public class Warehouse_ProductController:ControllerBase
+    public class Warehouse_ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;
         readonly IWarehouse_ProductService _Warehouse_ProductService;
         public Warehouse_ProductController(
             SqlDbContext conn,
             IWarehouse_ProductService Warehouse_ProductService
-            ){
+            )
+        {
             _conn = conn;
             _Warehouse_ProductService = Warehouse_ProductService;
         }
 
         [HttpPost("create")]
         public IActionResult Create([FromBody] Warehouse_ProductCreateDTO dto)
-            => Ok(_Warehouse_ProductService.CreateWarehouse_Product(dto));
+        {
+            var response = _Warehouse_ProductService.CreateWarehouse_Product(dto);
+            if (!response.IsSuccess)
+                return BadRequest(response.Message);
+            return Ok(response.Message);
+        }
 
 
         [HttpPut("Update")]
@@ -90,7 +96,7 @@ namespace Inventory.Controllers
 
             // Update only provided values
             if (dto.Product_Code > 0)
-                Warehouse_product.Product_Code = (int) dto.Product_Code;
+                Warehouse_product.Product_Code = (int)dto.Product_Code;
 
             if (dto.Supplier_ID > 0)
                 Warehouse_product.Product_Code = (int)dto.Supplier_ID;
@@ -104,8 +110,8 @@ namespace Inventory.Controllers
             if (dto.War_Number > 0)
                 Warehouse_product.Product_Code = (int)dto.War_Number;
 
-            if(dto.MFD != null)
-                Warehouse_product.MFD = (DateTime) dto.MFD;
+            if (dto.MFD != null)
+                Warehouse_product.MFD = (DateTime)dto.MFD;
 
             if (dto.EXP != null)
                 Warehouse_product.EXP = (DateTime)dto.EXP;
@@ -118,6 +124,6 @@ namespace Inventory.Controllers
             return true;
         }
 
-      
+
     }
 }

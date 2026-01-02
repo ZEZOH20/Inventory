@@ -1,69 +1,73 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.Warehouse_ProductDto.Requests;
+using Inventory.Interfaces;
 using Inventory.Models;
+using Inventory.Shares;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Services
 {
-    public interface IWarehouse_ProductService{
-        string CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
+    public interface IWarehouse_ProductService
+    {
+        Response CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
         bool CreationIsValid(Warehouse_ProductCreateDTO dto);
-         Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate);
+        Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate);
         Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate);
-        Warehouse_Product Delete(int Id);
+        Response<Warehouse_Product> Delete(int Id);
     }
     public class Warehouse_ProductService : IWarehouse_ProductService
     {
-        readonly SqlDbContext _conn;
-        public Warehouse_ProductService(SqlDbContext conn)
+        readonly IUnitOfWork _unitOfWork;
+        public Warehouse_ProductService(IUnitOfWork unitOfWork)
         {
-            _conn = conn;
+            _unitOfWork = unitOfWork;
         }
 
-       
-        public string CreateWarehouse_Product(Warehouse_ProductCreateDTO dto)
+
+        public Response CreateWarehouse_Product(Warehouse_ProductCreateDTO dto)
         {
 
             //validation
             if (!dto.Valid())
-                return $"check: \n" +
+                return Response.Failure($"check: \n" +
                     $"Product_Code,\n" +
                     $"War_Number,\n" +
                     $"Amount,\n" +
                     $"Price,\n" +
                     $"greater than > 0 \n\n" +
-                    $"MFD , EXP , EXP are Date Type";
+                    $"MFD , EXP , EXP are Date Type");
 
             if (!CreationIsValid(dto))
-                return $"Supplier_ID or \n " +
+                return Response.Failure($"Supplier_ID or \n " +
                     $"Product_Code or \n " +
                     $"Warehouse_Number \n  " +
-                    "can't found check them and try later";
+                    "can't found check them and try later");
 
             // Parse and validate dates
             DateTime mfdDate = DateTime.Parse(dto.MFD);
             DateTime expDate = DateTime.Parse(dto.EXP);
             if (expDate <= mfdDate)
-                return $"EXP Date : {expDate} \n " +
+                return Response.Failure($"EXP Date : {expDate} \n " +
                     $"can't be less than or equal\n" +
-                    $"MFD Date : {mfdDate}";
+                    $"MFD Date : {mfdDate}");
             //validation
 
             try
             {
-                var existingProduct = ProductExistInWarehouse(dto, mfdDate , expDate);
+                var existingProduct = ProductExistInWarehouse(dto, mfdDate, expDate);
                 //var existingProduct = ProductExistInWarehouse(dto.Supplier_ID, dto.Product_Code, dto.War_Number, mfdDate , expDate);
 
                 if (existingProduct is not null)
                 {
                     existingProduct.Total_Amount += dto.Amount;
                     existingProduct.Total_Price += dto.Amount * dto.Price;
+                    _unitOfWork.WarehouseProducts.Update(existingProduct);
                 }
                 else
                 {
 
 
-                    _conn.Warehouse_Products.Add(new Warehouse_Product
+                    _unitOfWork.WarehouseProducts.AddAsync(new Warehouse_Product
                     {
                         War_Number = dto.War_Number,
                         Product_Code = dto.Product_Code,
@@ -75,22 +79,22 @@ namespace Inventory.Services
                         Total_Price = dto.Amount * dto.Price,
                     });
                 }
-                _conn.SaveChanges();
+                _unitOfWork.SaveChangesAsync();
 
-                return "Product in Warehouse Created successfully";
+                return Response.Success("Product in Warehouse Created successfully");
 
             }
             catch (Exception ex)
             {
-                return "Can't Create Product in Warehouse" + ex.Message;
+                return Response.Failure("Can't Create Product in Warehouse" + ex.Message);
             }
         }
 
         public bool CreationIsValid(Warehouse_ProductCreateDTO dto)
         {
-            var SupplierExists = _conn.Suppliers.Any(s => s.Id == dto.Supplier_ID);
-            var ProductExists = _conn.Products.Any(p => p.Code == dto.Product_Code);
-            var WarehouseExists = _conn.Warehouses.Any(w => w.Number == dto.War_Number);
+            var SupplierExists = _unitOfWork.Suppliers.GetQuery().Any(s => s.Id == dto.Supplier_ID);
+            var ProductExists = _unitOfWork.Products.GetQuery().Any(p => p.Code == dto.Product_Code);
+            var WarehouseExists = _unitOfWork.Warehouses.GetQuery().Any(w => w.Number == dto.War_Number);
 
             if (!SupplierExists ||
                 !ProductExists ||
@@ -104,7 +108,7 @@ namespace Inventory.Services
 
 
         public Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate)
-         => _conn.Warehouse_Products.FirstOrDefault(wp =>
+         => _unitOfWork.WarehouseProducts.GetQuery().FirstOrDefault(wp =>
             wp.Supplier_ID == dto.Supplier_ID &&
             wp.Product_Code == dto.Product_Code &&
             wp.War_Number == dto.War_Number &&
@@ -113,25 +117,25 @@ namespace Inventory.Services
          );
 
         public Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate)
-      => _conn.Warehouse_Products.Include(wp=>wp.Product).FirstOrDefault(wp =>
+      => _unitOfWork.WarehouseProducts.GetQuery().Include(wp => wp.Product).FirstOrDefault(wp =>
          wp.Supplier_ID == Supplier_ID &&
          wp.Product_Code == Product_Code &&
          wp.War_Number == War_Number &&
          wp.EXP == expDate &&
          wp.MFD == mfdDate
       );
-        public Warehouse_Product Delete(int Id)
+        public Response<Warehouse_Product> Delete(int Id)
         {
-     
+
             try
             {
 
 
-                var Warehouse_Product = _conn.Warehouse_Products
+                var Warehouse_Product = _unitOfWork.WarehouseProducts.GetQuery()
                     .Include(wp => wp.Product) // Include navigation property
                     .FirstOrDefault(wp => wp.Id == Id);
-                if(Warehouse_Product == null)
-                    throw new Exception();
+                if (Warehouse_Product == null)
+                    return Response<Warehouse_Product>.Failure("Warehouse Product not found");
 
                 // Create a copy BEFORE deleting it
                 var warehouseProductCopy = new Warehouse_Product
@@ -148,14 +152,14 @@ namespace Inventory.Services
                     Product = Warehouse_Product.Product // assign the Product reference too
                 };
 
-                _conn.Warehouse_Products.Remove(Warehouse_Product);
-                _conn.SaveChanges();
+                _unitOfWork.WarehouseProducts.Delete(Warehouse_Product);
+                _unitOfWork.SaveChangesAsync();
 
-                return warehouseProductCopy;
+                return Response<Warehouse_Product>.Success(warehouseProductCopy, "Deleted successfully");
             }
             catch (Exception ex)
             {
-                throw new Exception("Can't delete Product in Warehouse" + ex.Message);
+                return Response<Warehouse_Product>.Failure("Can't delete Product in Warehouse" + ex.Message);
             }
         }
     }

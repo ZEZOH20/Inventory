@@ -1,14 +1,12 @@
 ﻿
 //using backend.Data.Configrations;
-using backend.Data.Configrations;
-using backend.Models;
 using Inventory.Data.Configrations;
 using Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Data.DbContexts
 {
-    public class SqlDbContext:DbContext
+    public class SqlDbContext : DbContext
     {
         public SqlDbContext(DbContextOptions<SqlDbContext> options) : base(options)
         {
@@ -29,7 +27,7 @@ namespace Inventory.Data.DbContexts
              .OnDelete(DeleteBehavior.Restrict);
         }
         public DbSet<User> Users { get; set; }
-        public DbSet<Supplier>Suppliers { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -40,7 +38,7 @@ namespace Inventory.Data.DbContexts
         public DbSet<SO_Product> SO_Products { get; set; }
         public DbSet<RO_Product> RO_Product { get; set; }
         public DbSet<TO_Product> TO_Products { get; set; }
-    
+
 
     }
 }

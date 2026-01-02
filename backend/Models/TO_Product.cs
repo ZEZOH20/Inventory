@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace backend.Models
+namespace Inventory.Models
 {
     public class TO_Product
     {

@@ -62,12 +62,12 @@ namespace Inventory.Controllers
             try
             {
                 //step 1 : delete warehouse_product 
-                Warehouse_Product warehouse_product = 
-                     _Warehouse_ProductService.Delete(dto.WarehouseProduct_Id);
-           
+                var deleteResponse = _Warehouse_ProductService.Delete(dto.WarehouseProduct_Id);
+                Warehouse_Product warehouse_product = deleteResponse.Data;
+
 
                 //step 2 : add deleted product details into into RO_Product table
-                AddDeletedProductDetails(warehouse_product , dto.RO_Number);
+                AddDeletedProductDetails(warehouse_product, dto.RO_Number);
 
                 _conn.SaveChanges();
 
@@ -82,7 +82,7 @@ namespace Inventory.Controllers
             }
         }
 
-        void AddDeletedProductDetails(Warehouse_Product wp , int Number)
+        void AddDeletedProductDetails(Warehouse_Product wp, int Number)
         {
             _conn.RO_Product.Add(new RO_Product
             {
@@ -91,7 +91,7 @@ namespace Inventory.Controllers
                 RO_Price = wp.Total_Price,
                 RO_Number = Number,
                 Product_Code = wp.Product_Code
-            });   
+            });
         }
 
 

@@ -1,81 +1,116 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.UserDto.Requests;
+using Inventory.Interfaces;
 using Inventory.Models;
+using Inventory.Shares;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace Inventory.Services
 {
-    public interface ICustomerCrudService
+    public interface ICustomerCrudService : IPersonCrudService<Customer>
     {
-        IEnumerable<Customer> SelectAll();
-        bool UpdateById(UserUpdateDTO dto);
-        bool CheckExistByMail(UserCreateDTO dto);
-        bool Delete(int id);
-
-        void Create(UserCreateDTO dto);
+        Response<PaginatedResponse<Customer>> SelectAll(int page = 1, int pageSize = 10);
+        Response<bool> UpdateById(UserUpdateDTO dto);
+        Response<bool> CheckExistByMail(UserCreateDTO dto);
+        Response<bool> Delete(int id);
+        Response<Customer> Create(UserCreateDTO dto);
     }
     public class CustomerCrudService : ICustomerCrudService
     {
-        readonly SqlDbContext _conn;
-        public CustomerCrudService(SqlDbContext conn)
+        readonly IUnitOfWork _unitOfWork;
+        public CustomerCrudService(IUnitOfWork unitOfWork)
         {
-            _conn = conn;
+            _unitOfWork = unitOfWork;
         }
-        public IEnumerable<Customer> SelectAll() => _conn.Customers.Select(u => u);
-
-        public bool CheckExistByMail(UserCreateDTO dto) => _conn.Customers.Any(u => u.Mail == dto.Mail);
-
-        public void Create(UserCreateDTO dto)
+        public Response<PaginatedResponse<Customer>> SelectAll(int page = 1, int pageSize = 10)
         {
-            _conn.Customers.Add(new Customer
+            var query = _unitOfWork.Customers.GetQuery();
+            var totalCount = query.Count();
+            var customers = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var paginated = new PaginatedResponse<Customer>(customers, page, pageSize, totalCount);
+            return Response<PaginatedResponse<Customer>>.Success(paginated);
+        }
+
+        public Response<bool> CheckExistByMail(UserCreateDTO dto)
+        {
+            var exists = _unitOfWork.Customers.Find(c => c.Mail == dto.Mail).Any();
+            return Response<bool>.Success(exists);
+        }
+
+        public Response<Customer> Create(UserCreateDTO dto)
+        {
+            try
             {
-                Name = dto.Name,
-                Domain = dto.Domain,
-                Phone = int.Parse(dto.Phone),
-                Fax = dto.Fax,
-                Mail = dto.Mail
-            });
-            _conn.SaveChanges();
-        }
-        public bool UpdateById(UserUpdateDTO dto)
-        {
-            var customer = _conn.Customers.FirstOrDefault(u => u.Id == dto.Id);
-
-            if (customer == null)
-                return false;
-
-            // Update only provided values
-            if (!string.IsNullOrEmpty(dto.Name))
-                customer.Name = dto.Name;
-
-            if (!string.IsNullOrEmpty(dto.Phone))
-                customer.Phone = int.Parse(dto.Phone);
-
-            if (!string.IsNullOrEmpty(dto.Fax))
-                customer.Fax = dto.Fax;
-
-            if (!string.IsNullOrEmpty(dto.Mail))
-                customer.Mail = dto.Mail;
-
-            if (!string.IsNullOrEmpty(dto.Domain))
-                customer.Domain = dto.Domain;
-
-            _conn.SaveChanges();
-
-            return true;
-        }
-
-        public bool Delete(int id)
-        {
-            var customer = _conn.Customers.FirstOrDefault(u => u.Id == id);
-            if (customer != null)
-            {
-                _conn.Customers.Remove(customer);
-                _conn.SaveChanges();
-                return true;
+                var customer = new Customer
+                {
+                    Name = dto.Name,
+                    Domain = dto.Domain,
+                    Phone = int.Parse(dto.Phone),
+                    Fax = dto.Fax,
+                    Mail = dto.Mail
+                };
+                _unitOfWork.Customers.Add(customer);
+                _unitOfWork.Complete();
+                return Response<Customer>.Success(customer);
             }
-            return false;
+            catch (Exception ex)
+            {
+                return Response<Customer>.Failure("Can't create customer: " + ex.Message);
+            }
+        }
+        public Response<bool> UpdateById(UserUpdateDTO dto)
+        {
+            try
+            {
+                var customer = _unitOfWork.Customers.GetById(dto.Id);
+
+                if (customer == null)
+                    return Response<bool>.Failure("Customer not found");
+
+                // Update only provided values
+                if (!string.IsNullOrEmpty(dto.Name))
+                    customer.Name = dto.Name;
+
+                if (!string.IsNullOrEmpty(dto.Phone))
+                    customer.Phone = int.Parse(dto.Phone);
+
+                if (!string.IsNullOrEmpty(dto.Fax))
+                    customer.Fax = dto.Fax;
+
+                if (!string.IsNullOrEmpty(dto.Mail))
+                    customer.Mail = dto.Mail;
+
+                if (!string.IsNullOrEmpty(dto.Domain))
+                    customer.Domain = dto.Domain;
+
+                _unitOfWork.Complete();
+
+                return Response<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Response<bool>.Failure("Can't update customer: " + ex.Message);
+            }
+        }
+
+        public Response<bool> Delete(int id)
+        {
+            try
+            {
+                var customer = _unitOfWork.Customers.GetById(id);
+                if (customer != null)
+                {
+                    _unitOfWork.Customers.Remove(customer);
+                    _unitOfWork.Complete();
+                    return Response<bool>.Success(true);
+                }
+                return Response<bool>.Failure("Customer not found");
+            }
+            catch (Exception ex)
+            {
+                return Response<bool>.Failure("Can't delete customer: " + ex.Message);
+            }
         }
     }
 }

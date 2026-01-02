@@ -67,14 +67,14 @@ namespace Inventory.Controllers
                 //step 1 : add product into SO_Product table
                 _conn.SO_Products.Add(new SO_Product
                 {
-                        SO_Amount = dto.SO_Amount,
-                        SO_Unit = dto.SO_Unit,
-                         SO_Price = dto.SO_Price,
-                        SO_MFD  = mfdDate,
-                         SO_EXP =expDate,
-                        SO_Number = dto.SO_Number,
-                        Product_Code = dto.Product_Code
-                    });
+                    SO_Amount = dto.SO_Amount,
+                    SO_Unit = dto.SO_Unit,
+                    SO_Price = dto.SO_Price,
+                    SO_MFD = mfdDate,
+                    SO_EXP = expDate,
+                    SO_Number = dto.SO_Number,
+                    Product_Code = dto.Product_Code
+                });
 
                 //step 2 : add product to warehouse_products table
                 AutomaticAddProductToWarehouse(dto);
@@ -92,9 +92,9 @@ namespace Inventory.Controllers
 
         bool AutomaticAddProductToWarehouse(SO_ProductCreateDTO dto)
         {
-            var SupplyOrder = _conn.Supply_Orders.FirstOrDefault(so=>so.Number==dto.SO_Number);
+            var SupplyOrder = _conn.Supply_Orders.FirstOrDefault(so => so.Number == dto.SO_Number);
 
-            if( SupplyOrder == null ) 
+            if (SupplyOrder == null)
                 return false;
 
             Warehouse_ProductCreateDTO wp_dto = new Warehouse_ProductCreateDTO
@@ -109,7 +109,9 @@ namespace Inventory.Controllers
             };
 
             //create actual product 
-            _Warehouse_ProductService.CreateWarehouse_Product(wp_dto);
+            var createResponse = _Warehouse_ProductService.CreateWarehouse_Product(wp_dto);
+            if (!createResponse.IsSuccess)
+                return false;
 
             return true;
         }

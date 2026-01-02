@@ -1,49 +1,64 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.UserDto.Requests;
+using Inventory.Interfaces;
 using Inventory.Models;
+using Inventory.Shares;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace Inventory.Services
 {
-    public interface IUserCrudService
+    public interface IUserCrudService : IPersonCrudService<User>
     {
-        IEnumerable<User> SelectAll();
-        bool UpdateById(UserUpdateDTO dto);
-        bool CheckExistByMail(UserCreateDTO dto);
-        bool  Delete(int id);    
+        Response<PaginatedResponse<User>> SelectAll(int page = 1, int pageSize = 10);
+        Response<bool> UpdateById(UserUpdateDTO dto);
+        Response<bool> CheckExistByMail(UserCreateDTO dto);
+        Response<bool> Delete(int id);
 
-        void Create(UserCreateDTO dto);
+        Response<User> Create(UserCreateDTO dto);
     }
     public class UserCrudService : IUserCrudService
     {
-        readonly SqlDbContext _conn;
-        public UserCrudService(SqlDbContext conn)
+        readonly IUnitOfWork _unitOfWork;
+        public UserCrudService(IUnitOfWork unitOfWork)
         {
-           _conn = conn;
+            _unitOfWork = unitOfWork;
         }
-        public IEnumerable<User> SelectAll() => _conn.Users.Select(u => u);
-
-        public bool CheckExistByMail(UserCreateDTO dto) => _conn.Users.Any(u => u.Mail == dto.Mail);
-
-        public void Create(UserCreateDTO dto)
+        public Response<PaginatedResponse<User>> SelectAll(int page = 1, int pageSize = 10)
         {
-            _conn.Users.Add(new User
+            var query = _unitOfWork.Users.GetQuery();
+            var totalCount = query.Count();
+            var users = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var paginated = new PaginatedResponse<User>(users, page, pageSize, totalCount);
+            return Response<PaginatedResponse<User>>.Success(paginated);
+        }
+
+        public Response<bool> CheckExistByMail(UserCreateDTO dto)
+        {
+            var exists = _unitOfWork.Users.Find(u => u.Mail == dto.Mail).Any();
+            return Response<bool>.Success(exists);
+        }
+
+        public Response<User> Create(UserCreateDTO dto)
+        {
+            var user = new User
             {
                 Name = dto.Name,
                 Domain = dto.Domain,
                 Phone = int.Parse(dto.Phone),
                 Fax = dto.Fax,
                 Mail = dto.Mail
-            });
-            _conn.SaveChanges();
+            };
+            _unitOfWork.Users.Add(user);
+            _unitOfWork.Complete();
+            return Response<User>.Success(user);
         }
-        public bool UpdateById(UserUpdateDTO dto)
+        public Response<bool> UpdateById(UserUpdateDTO dto)
         {
-            var user = _conn.Users.FirstOrDefault(u => u.Id == dto.Id);
+            var user = _unitOfWork.Users.GetById(dto.Id);
 
             if (user == null)
-                return false;
+                return Response<bool>.Failure("User not found");
 
             // Update only provided values
             if (!string.IsNullOrEmpty(dto.Name))
@@ -52,30 +67,30 @@ namespace Inventory.Services
             if (!string.IsNullOrEmpty(dto.Phone))
                 user.Phone = int.Parse(dto.Phone);
 
-            if (!string.IsNullOrEmpty(dto.Fax)) 
+            if (!string.IsNullOrEmpty(dto.Fax))
                 user.Fax = dto.Fax;
 
             if (!string.IsNullOrEmpty(dto.Mail))
                 user.Mail = dto.Mail;
 
-            if (!string.IsNullOrEmpty(dto.Domain)) 
+            if (!string.IsNullOrEmpty(dto.Domain))
                 user.Domain = dto.Domain;
 
-            _conn.SaveChanges();
+            _unitOfWork.Complete();
 
-            return true;
+            return Response<bool>.Success(true);
         }
 
-        public bool Delete(int id)
+        public Response<bool> Delete(int id)
         {
-            var user = _conn.Users.FirstOrDefault(u => u.Id == id);
+            var user = _unitOfWork.Users.GetById(id);
             if (user != null)
             {
-                _conn.Users.Remove(user);
-                _conn.SaveChanges();
-                return true;
+                _unitOfWork.Users.Remove(user);
+                _unitOfWork.Complete();
+                return Response<bool>.Success(true);
             }
-            return false;
+            return Response<bool>.Failure("User not found");
         }
     }
 }
