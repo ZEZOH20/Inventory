@@ -13,7 +13,7 @@ namespace Inventory.Models
 
         [EmailAddress]
         [Required(ErrorMessage = "Mail is required")]
-        public  string Mail { get; set; }
+        public string Mail { get; set; }
         public string? Domain { get; set; }
     }
 }

@@ -19,7 +19,7 @@ namespace Inventory.Models
 
         //Navigation
         public Supplier Supplier { get; set; }
-        public Warehouse Warehouse { get; set; }  
+        public Warehouse Warehouse { get; set; }
 
         public List<SO_Product> SO_Products { get; set; }
     }

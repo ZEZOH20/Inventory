@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using backend.Migrations;
 
 #nullable disable
 
-namespace Inventory.Migrations
+namespace backend.Migrations
 {
     [DbContext(typeof(SqlDbContext))]
     [Migration("20250530151431_UsersTable")]

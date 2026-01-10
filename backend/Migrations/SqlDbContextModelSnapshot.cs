@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Inventory.Migrations
+namespace backend.Migrations
 {
     [DbContext(typeof(SqlDbContext))]
     partial class SqlDbContextModelSnapshot : ModelSnapshot

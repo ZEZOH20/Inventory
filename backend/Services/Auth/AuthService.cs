@@ -12,11 +12,15 @@ namespace Inventory.Services.Auth
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
+        private readonly IOtpService _otpService;
+        private readonly ISendEmailService _sendEmailService;
 
-        public AuthService(UserManager<ApplicationUser> userManager, ITokenService tokenService)
+        public AuthService(UserManager<ApplicationUser> userManager, ITokenService tokenService, IOtpService otpService, ISendEmailService sendEmailService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
+            _otpService = otpService;
+            _sendEmailService = sendEmailService;
         }
 
         public async Task<Response<AuthDto>> LoginAsync(LoginDto dto)
@@ -42,11 +46,16 @@ namespace Inventory.Services.Auth
             return Response<AuthDto>.Success(authDto, "Login successful");
         }
 
-        public async Task<Response<AuthDto>> RegisterAsync(RegisterDto dto)
+        public async Task<Response<AuthDto>> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
                 return Response<AuthDto>.Failure("Email is already registered", HttpStatusCode.BadRequest);
+
+            // Verify OTP
+            var isVerified = await _otpService.ValidateOtpAsync(dto.UserKey, dto.Otp, cancellationToken);
+            if (!isVerified)
+                return Response<AuthDto>.Failure("Invalid or expired OTP", HttpStatusCode.BadRequest);
 
             var user = new ApplicationUser
             {
@@ -76,11 +85,46 @@ namespace Inventory.Services.Auth
 
             return Response<AuthDto>.Success(authDto, "Registration successful");
         }
+
+        public async Task<Response> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
+                return Response.Failure("Email does not exist", HttpStatusCode.NotFound);
+
+            // Verify OTP
+            var isVerified = await _otpService.ValidateOtpAsync(dto.UserKey, dto.Otp, cancellationToken);
+            if (!isVerified)
+                return Response.Failure("Invalid or expired OTP", HttpStatusCode.BadRequest);
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);
+
+            if (!result.Succeeded)
+                return Response.Failure($"Password reset failed: {string.Join(", ", result.Errors.Select(e => e.Description))}", HttpStatusCode.InternalServerError);
+
+            return Response.Success("Password reset successful");
+        }
+
+        public async Task<Response<SendVerificationEmailRsDto>> SendVerificationEmailAsync(SendVerificationEmailRqDto dto, CancellationToken cancellationToken)
+        {
+            // Generate and store OTP
+            var otpResult = await _otpService.GenerateAndStoreOtpAsync(dto.Email, cancellationToken);
+
+            // Send email
+            var emailSent = await _sendEmailService.SendVerificationEmail(dto.Email, otpResult.Otp);
+            if (!emailSent)
+                return Response<SendVerificationEmailRsDto>.Failure("Failed to send email", HttpStatusCode.InternalServerError);
+
+            return Response<SendVerificationEmailRsDto>.Success(otpResult, "Verification email sent");
+        }
     }
 
     public interface IAuthService
     {
         Task<Response<AuthDto>> LoginAsync(LoginDto dto);
-        Task<Response<AuthDto>> RegisterAsync(RegisterDto dto);
+        Task<Response<AuthDto>> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken);
+        Task<Response> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken);
+        Task<Response<SendVerificationEmailRsDto>> SendVerificationEmailAsync(SendVerificationEmailRqDto dto, CancellationToken cancellationToken);
     }
 }

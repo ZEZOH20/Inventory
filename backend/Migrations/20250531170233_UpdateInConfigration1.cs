@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using backend.Migrations;
 
 #nullable disable
 
-namespace Inventory.Migrations
+namespace backend.Migrations
 {
     /// <inheritdoc />
     public partial class UpdateInConfigration1 : Migration

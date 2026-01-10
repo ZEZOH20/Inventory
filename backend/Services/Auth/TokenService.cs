@@ -34,7 +34,7 @@ namespace Inventory.Services.Auth
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwt.TokenExpirationInMinutes),
+                expires: DateTime.UtcNow.AddHours(_jwt.DurationInHours),
                 signingCredentials: creds);
 
             return token;

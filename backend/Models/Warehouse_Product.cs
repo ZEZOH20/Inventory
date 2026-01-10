@@ -34,7 +34,7 @@ namespace Inventory.Models
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double Total_Price { get; set; }
 
-        
+
         //Navigation
         public Product Product { get; set; }
         public Warehouse Warehouse { get; set; }

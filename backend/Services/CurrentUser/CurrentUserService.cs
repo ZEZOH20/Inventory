@@ -14,6 +14,8 @@ public class CurrentUserService : ICurrentUser
 
     public string? UserId => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+    public string? UserRole => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;
+
     public string? GetUserIp()
     {
         var context = _httpContextAccessor.HttpContext;

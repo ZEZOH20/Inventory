@@ -94,6 +94,20 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
 
+// New Auth Services
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<ISendEmailService, SendEmailService>();
+builder.Services.AddScoped<IAuditableEntityService, AuditableEntityService>();
+
+// Configure FluentEmail
+builder.Services.AddFluentEmail(builder.Configuration["Smtp:FromEmail"])
+    .AddSmtpSender(new System.Net.Mail.SmtpClient(builder.Configuration["Smtp:Host"], int.Parse(builder.Configuration["Smtp:Port"] ?? "587"))
+    {
+        Credentials = new System.Net.NetworkCredential(builder.Configuration["Smtp:Username"], builder.Configuration["Smtp:Password"]),
+        EnableSsl = true
+    });
+
 // Register Repository and Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -109,8 +123,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<SupplyOrderCreateDTOValidat
 builder.Services.AddValidatorsFromAssemblyContaining<TransferOrderCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReleaseOrderCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<SO_ProductCreateDTOValidator>();
-//builder.Services.AddScoped<IValidator<UserUpdateDTO>, UserUpdateDTOValidator>();
-// Register Custom Services .....
+builder.Services.AddValidatorsFromAssemblyContaining<ResetPasswordDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SendVerificationEmailRqDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordDtoValidator>();
 
 //Swagger Services
 builder.Services.AddEndpointsApiExplorer();

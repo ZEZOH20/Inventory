@@ -27,6 +27,15 @@ namespace Inventory.DTO.AuthDtos.Validators
                 .NotEmpty().WithMessage("Role is required")
                 .Must(role => new[] { "Owner", "Manager", "Employee" }.Contains(role))
                 .WithMessage("Role must be one of: Owner, Manager, Employee");
+
+            RuleFor(x => x.UserKey)
+                .NotEmpty().WithMessage("UserKey is required")
+                .Must(key => Guid.TryParse(key, out _)).WithMessage("UserKey must be a valid GUID");
+
+            RuleFor(x => x.Otp)
+                .NotEmpty().WithMessage("OTP is required")
+                .Length(6).WithMessage("OTP must be exactly 6 digits")
+                .Matches("^[0-9]{6}$").WithMessage("OTP must contain only digits");
         }
     }
 }

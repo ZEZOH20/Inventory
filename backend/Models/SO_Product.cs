@@ -5,7 +5,7 @@ namespace Inventory.Models
 {
     public class SO_Product : AuditableEntity
     {
-        public int Id {  get; set; }
+        public int Id { get; set; }
 
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double SO_Amount { get; set; } //
@@ -34,7 +34,7 @@ namespace Inventory.Models
         //Navigation
         public Supply_Order Supply_Order { get; set; }
         public Product Product { get; set; }
-        
+
 
     }
 }

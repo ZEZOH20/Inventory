@@ -27,9 +27,29 @@ namespace Inventory.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
         {
-            var result = await _authService.RegisterAsync(dto);
+            var result = await _authService.RegisterAsync(dto, cancellationToken);
+            if (!result.IsSuccess)
+                return StatusCode((int)result.StatusCode, result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("send-verification-email")]
+        public async Task<IActionResult> SendVerificationEmail([FromBody] SendVerificationEmailRqDto dto, CancellationToken cancellationToken)
+        {
+            var result = await _authService.SendVerificationEmailAsync(dto, cancellationToken);
+            if (!result.IsSuccess)
+                return StatusCode((int)result.StatusCode, result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+        {
+            var result = await _authService.ResetPasswordAsync(dto, cancellationToken);
             if (!result.IsSuccess)
                 return StatusCode((int)result.StatusCode, result);
 
