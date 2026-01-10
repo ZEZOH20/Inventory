@@ -5,12 +5,14 @@ using Inventory.DTO.SupplyOrderDto.Requests;
 using Inventory.DTO.SupplyOrderDto.Validations;
 using Inventory.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class ReleaseOrderController : ControllerBase
     {
         readonly SqlDbContext _conn;

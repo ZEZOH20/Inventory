@@ -21,7 +21,6 @@ namespace Inventory.DTO.UserDto.Requests
             return !string.IsNullOrEmpty(Name) ||
                    !string.IsNullOrEmpty(Phone) ||
                    !string.IsNullOrEmpty(Fax) ||
-                   !string.IsNullOrEmpty(Mail) ||
                    !string.IsNullOrEmpty(Domain) ||
                    ProfileImage != null;
         }

@@ -7,6 +7,7 @@ using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.Models;
 using Inventory.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
@@ -15,6 +16,7 @@ namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class RO_ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;

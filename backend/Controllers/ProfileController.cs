@@ -55,8 +55,7 @@ namespace Inventory.Controllers
                 user.Name = dto.Name;
             if (!string.IsNullOrEmpty(dto.Phone))
                 user.PhoneNumber = dto.Phone;
-            if (!string.IsNullOrEmpty(dto.Mail))
-                user.Email = dto.Mail;
+            // Note: Email cannot be updated through profile - requires separate verification process
             // Fax and Domain are not in ApplicationUser, so ignore
 
             // Handle profile image

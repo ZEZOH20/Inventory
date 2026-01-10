@@ -3,12 +3,14 @@ using backend.DTO.TransferOrderDto.Validations;
 using Inventory.Data.DbContexts;
 using Inventory.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class TransferOrderController : ControllerBase
     {
         readonly SqlDbContext _conn;

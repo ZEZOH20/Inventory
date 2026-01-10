@@ -7,12 +7,14 @@ using Inventory.Models;
 using Inventory.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize(Roles = "Owner,Manager")]
     public class Warehouse_ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;

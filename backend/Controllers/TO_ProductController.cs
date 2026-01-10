@@ -8,6 +8,7 @@ using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.Models;
 using Inventory.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using backend.Migrations;
 
 
@@ -16,6 +17,7 @@ namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class TO_ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;

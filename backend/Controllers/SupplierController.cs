@@ -9,10 +9,13 @@ using Inventory.DTO.UserDto.Responses;
 using FluentValidation;
 using Inventory.DTO.UserDto.Validations;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.AspNetCore.Authorization;
+
 namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize(Roles = "Owner,Manager")]
     public class SupplierController : PersonCrudController<ISupplierCrudService, Supplier>
     {
         public SupplierController(

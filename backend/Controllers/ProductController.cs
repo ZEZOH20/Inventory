@@ -11,10 +11,13 @@ using Inventory.DTO.ProductDto.Requests;
 using System.Drawing;
 using System.IO.Pipelines;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Authorization;
+
 namespace Inventory.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize(Roles = "Owner,Manager")]
     public class ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;
