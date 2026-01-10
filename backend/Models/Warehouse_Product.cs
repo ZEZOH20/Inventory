@@ -34,6 +34,11 @@ namespace Inventory.Models
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double Total_Price { get; set; }
 
+        [Range(0, double.MaxValue, ErrorMessage = "Reserved quantity must be non-negative")]
+        public double ReservedQuantity { get; set; } = 0;
+
+        [NotMapped]
+        public double AvailableQuantity => Total_Amount - ReservedQuantity;
 
         //Navigation
         public Product Product { get; set; }

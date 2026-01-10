@@ -6,8 +6,10 @@ using Inventory.Services.Auth;
 using Inventory.Services.CurrentUser;
 using Inventory.Shares;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Inventory.Services;
 
 namespace Inventory.Controllers
 {
@@ -18,11 +20,15 @@ namespace Inventory.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICurrentUser _currentUserService;
+        private readonly IImageService _imageService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProfileController(UserManager<ApplicationUser> userManager, ICurrentUser currentUserService)
+        public ProfileController(UserManager<ApplicationUser> userManager, ICurrentUser currentUserService, IImageService imageService, IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
             _currentUserService = currentUserService;
+            _imageService = imageService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet]
@@ -32,36 +38,74 @@ namespace Inventory.Controllers
             if (user == null)
                 return NotFound("User not found");
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var response = new UserResponseDTO
-            {
-                Id = user.Id,
-                Name = user.UserName ?? "",
-                Mail = user.Email ?? "",
-                Phone = user.PhoneNumber ?? "",
-                Fax = "No Fax",
-                Domain = "No Domain"
-            };
+            var response = new UserResponseDTO(user);
 
             return Ok(Response<UserResponseDTO>.Success(response, "Profile retrieved successfully"));
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateProfile([FromBody] UserUpdateDTO dto)
+        public async Task<IActionResult> UpdateProfile([FromForm] UserUpdateDTO dto)
         {
             var user = await _userManager.FindByIdAsync(_currentUserService.UserId);
             if (user == null)
                 return NotFound("User not found");
 
-            user.UserName = dto.Name;
-            user.Email = dto.Mail;
-            user.Name = dto.Name;
+            // Update allowed fields
+            if (!string.IsNullOrEmpty(dto.Name))
+                user.Name = dto.Name;
+            if (!string.IsNullOrEmpty(dto.Phone))
+                user.PhoneNumber = dto.Phone;
+            if (!string.IsNullOrEmpty(dto.Mail))
+                user.Email = dto.Mail;
+            // Fax and Domain are not in ApplicationUser, so ignore
+
+            // Handle profile image
+            if (dto.ProfileImage != null)
+            {
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(user.ProfileImage))
+                {
+                    await _imageService.DeleteImageAsync(user.ProfileImage);
+                }
+
+                // Upload new image
+                var imagePath = await _imageService.UploadImageAsync(dto.ProfileImage);
+                if (imagePath != null)
+                {
+                    user.ProfileImage = imagePath;
+                }
+            }
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 return BadRequest($"Update failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
 
             return Ok(Inventory.Shares.Response.Success("Profile updated successfully"));
+        }
+
+        [HttpGet("image")]
+        public async Task<IActionResult> GetProfileImage()
+        {
+            var user = await _userManager.FindByIdAsync(_currentUserService.UserId);
+            if (user == null || string.IsNullOrEmpty(user.ProfileImage))
+                return NotFound("Profile image not found");
+
+            var path = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, user.ProfileImage);
+            if (!System.IO.File.Exists(path))
+                return NotFound("Profile image not found");
+
+            var extension = System.IO.Path.GetExtension(path).ToLowerInvariant();
+            string mimeType = extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                ".webp" => "image/webp",
+                _ => "application/octet-stream"
+            };
+
+            return PhysicalFile(path, mimeType);
         }
 
         [HttpPost("change-password")]

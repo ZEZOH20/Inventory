@@ -7,6 +7,7 @@ namespace Inventory.Models
         public string Name { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public int? WarehouseId { get; set; } // For Managers, nullable for others
+        public string? ProfileImage { get; set; }
 
         // Navigation property
         public Warehouse? Warehouse { get; set; }

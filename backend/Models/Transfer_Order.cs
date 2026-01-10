@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Inventory.Shares;
 
 namespace Inventory.Models
 {
@@ -19,6 +20,13 @@ namespace Inventory.Models
 
         [DataType(DataType.Date)]
         public DateTime T_Date { get; set; }
+
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+        public string? ApprovedBy { get; set; }
+        public DateTime? ApprovedAt { get; set; }
+        public string? ReviewNotes { get; set; }
+        public string? CancellationReason { get; set; }
 
         //Navigation
         public Supplier Supplier { get; set; }

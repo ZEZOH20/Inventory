@@ -20,6 +20,7 @@ using Inventory.Services.Auth;
 using Inventory.Models;
 using Inventory.Shares;
 using Inventory.Services.CurrentUser;
+using Microsoft.OpenApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +87,8 @@ builder.Services.AddScoped<IUserCrudService, UserCrudService>();
 builder.Services.AddScoped<ICustomerCrudService, CustomerCrudService>();
 builder.Services.AddScoped<ISupplierCrudService, SupplierCrudService>();
 builder.Services.AddScoped<IWarehouse_ProductService, Warehouse_ProductService>();
+builder.Services.AddScoped<IApprovalService, ApprovalService>();
+builder.Services.AddScoped<IInventoryReservationService, InventoryReservationService>();
 
 // Auth Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -93,6 +96,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
+
+// Image Service
+builder.Services.AddScoped<IImageService, ImageService>();
 
 // New Auth Services
 builder.Services.AddDistributedMemoryCache();
@@ -130,7 +136,30 @@ builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordDtoValidator>
 //Swagger Services
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter JWT with Bearer into field",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] { }
+        }
+    });
+});
 
 var app = builder.Build();
 

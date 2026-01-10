@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Inventory.DTO.UserDto.Requests
 {
@@ -12,6 +13,7 @@ namespace Inventory.DTO.UserDto.Requests
         public string? Fax { get; set; }
         public string? Mail { get; set; }
         public string? Domain { get; set; }
+        public IFormFile? ProfileImage { get; set; }
 
         // Custom validation to ensure at least one field is provided
         public bool HasAtLeastOneValue()
@@ -20,7 +22,8 @@ namespace Inventory.DTO.UserDto.Requests
                    !string.IsNullOrEmpty(Phone) ||
                    !string.IsNullOrEmpty(Fax) ||
                    !string.IsNullOrEmpty(Mail) ||
-                   !string.IsNullOrEmpty(Domain);
+                   !string.IsNullOrEmpty(Domain) ||
+                   ProfileImage != null;
         }
     }
 }
