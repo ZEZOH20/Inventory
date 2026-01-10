@@ -105,6 +105,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
 builder.Services.AddScoped<IAuditableEntityService, AuditableEntityService>();
+builder.Services.AddScoped<IReportingService, ReportingService>();
 
 // Configure FluentEmail
 builder.Services.AddFluentEmail(builder.Configuration["Smtp:FromEmail"])

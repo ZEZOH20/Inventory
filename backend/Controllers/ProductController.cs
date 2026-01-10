@@ -34,7 +34,7 @@ namespace Inventory.Controllers
                     .Select(p => new ProductResponseDTO
                     {
                         Code = p.Code,
-                        Name =p.Name,
+                        Name = p.Name,
                         Unit = p.Unit
                     })
                     .ToList();
@@ -49,7 +49,7 @@ namespace Inventory.Controllers
         [HttpPost("create")]
         public IActionResult Create([FromBody] ProductCreateDTO dto)
         {
-           
+
             try
             {
                 _conn.Products.Add(new Product

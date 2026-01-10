@@ -60,4 +60,22 @@ namespace Inventory.Shares
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
     }
+
+    public class ReportResponse<T>
+    {
+        public T Data { get; set; }
+        public string ReportTitle { get; set; }
+        public DateTime GeneratedAt { get; set; }
+        public string GeneratedBy { get; set; }
+        public Dictionary<string, object> Metadata { get; set; }
+
+        public ReportResponse(T data, string reportTitle, string generatedBy)
+        {
+            Data = data;
+            ReportTitle = reportTitle;
+            GeneratedAt = DateTime.UtcNow;
+            GeneratedBy = generatedBy;
+            Metadata = new Dictionary<string, object>();
+        }
+    }
 }
