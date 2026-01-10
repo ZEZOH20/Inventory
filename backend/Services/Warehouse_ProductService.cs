@@ -3,6 +3,7 @@ using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.Interfaces;
 using Inventory.Models;
 using Inventory.Shares;
+using Inventory.Services.CurrentUser;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Services
@@ -18,9 +19,12 @@ namespace Inventory.Services
     public class Warehouse_ProductService : IWarehouse_ProductService
     {
         readonly IUnitOfWork _unitOfWork;
-        public Warehouse_ProductService(IUnitOfWork unitOfWork)
+        readonly ICurrentUser _currentUser;
+
+        public Warehouse_ProductService(IUnitOfWork unitOfWork, ICurrentUser currentUser)
         {
             _unitOfWork = unitOfWork;
+            _currentUser = currentUser;
         }
 
 
@@ -61,13 +65,12 @@ namespace Inventory.Services
                 {
                     existingProduct.Total_Amount += dto.Amount;
                     existingProduct.Total_Price += dto.Amount * dto.Price;
+                    existingProduct.SetUpdated(_currentUser.UserId);
                     _unitOfWork.WarehouseProducts.Update(existingProduct);
                 }
                 else
                 {
-
-
-                    _unitOfWork.WarehouseProducts.AddAsync(new Warehouse_Product
+                    var newProduct = new Warehouse_Product
                     {
                         War_Number = dto.War_Number,
                         Product_Code = dto.Product_Code,
@@ -77,7 +80,9 @@ namespace Inventory.Services
                         Store_Date = DateTime.UtcNow,
                         Total_Amount = dto.Amount,
                         Total_Price = dto.Amount * dto.Price,
-                    });
+                    };
+                    newProduct.SetCreated(_currentUser.UserId);
+                    _unitOfWork.WarehouseProducts.AddAsync(newProduct);
                 }
                 _unitOfWork.SaveChangesAsync();
 
@@ -126,36 +131,21 @@ namespace Inventory.Services
       );
         public Response<Warehouse_Product> Delete(int Id)
         {
-
             try
             {
-
-
-                var Warehouse_Product = _unitOfWork.WarehouseProducts.GetQuery()
-                    .Include(wp => wp.Product) // Include navigation property
+                var warehouseProduct = _unitOfWork.WarehouseProducts.GetQuery()
+                    .Include(wp => wp.Product)
                     .FirstOrDefault(wp => wp.Id == Id);
-                if (Warehouse_Product == null)
+
+                if (warehouseProduct == null)
                     return Response<Warehouse_Product>.Failure("Warehouse Product not found");
 
-                // Create a copy BEFORE deleting it
-                var warehouseProductCopy = new Warehouse_Product
-                {
-                    Id = Warehouse_Product.Id,
-                    War_Number = Warehouse_Product.War_Number,
-                    Product_Code = Warehouse_Product.Product_Code,
-                    Supplier_ID = Warehouse_Product.Supplier_ID,
-                    MFD = Warehouse_Product.MFD,
-                    EXP = Warehouse_Product.EXP,
-                    Store_Date = Warehouse_Product.Store_Date,
-                    Total_Amount = Warehouse_Product.Total_Amount,
-                    Total_Price = Warehouse_Product.Total_Price,
-                    Product = Warehouse_Product.Product // assign the Product reference too
-                };
-
-                _unitOfWork.WarehouseProducts.Delete(Warehouse_Product);
+                // Soft delete the product
+                warehouseProduct.SoftDelete(_currentUser.UserId);
+                _unitOfWork.WarehouseProducts.Update(warehouseProduct);
                 _unitOfWork.SaveChangesAsync();
 
-                return Response<Warehouse_Product>.Success(warehouseProductCopy, "Deleted successfully");
+                return Response<Warehouse_Product>.Success(warehouseProduct, "Deleted successfully");
             }
             catch (Exception ex)
             {

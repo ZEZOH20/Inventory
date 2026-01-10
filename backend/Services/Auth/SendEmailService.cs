@@ -22,4 +22,15 @@ public class SendEmailService : ISendEmailService
 
         return emailMessage.Successful;
     }
+
+    public async Task<bool> SendEmailAsync(string email, string subject, string body)
+    {
+        var emailMessage = await _fluentEmail
+            .To(email)
+            .Subject(subject)
+            .Body(body, isHtml: true)
+            .SendAsync();
+
+        return emailMessage.Successful;
+    }
 }

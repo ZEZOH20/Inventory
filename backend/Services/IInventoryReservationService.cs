@@ -6,6 +6,7 @@ namespace Inventory.Services
     {
         Task<Response> ReserveInventoryAsync(int warehouseProductId, double quantity);
         Task<Response> ReleaseReservationAsync(int warehouseProductId, double quantity);
+        Task<Response> ReleaseReservationAsync(int orderId, OrderType orderType);
         Task<Response<double>> GetAvailableQuantityAsync(int warehouseProductId);
     }
 }

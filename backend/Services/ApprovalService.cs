@@ -62,8 +62,13 @@ namespace Inventory.Services
 
                 await _unitOfWork.SaveChangesAsync();
 
-                // TODO: Execute inventory changes based on order type
-                // TODO: Send approval notification
+                // Execute inventory changes based on order type
+                var inventoryResult = await ExecuteInventoryChangesAsync(orderId, orderType);
+                if (!inventoryResult.IsSuccess)
+                    return inventoryResult;
+
+                // Send approval notification
+                await SendApprovalNotificationAsync(orderId, orderType, approverId, reviewNotes);
 
                 return Response.Success("Order approved successfully");
             }
@@ -101,8 +106,13 @@ namespace Inventory.Services
 
                 await _unitOfWork.SaveChangesAsync();
 
-                // TODO: Release any reserved inventory
-                // TODO: Send rejection notification
+                // Release any reserved inventory
+                var releaseResult = await _inventoryService.ReleaseReservationAsync(orderId, orderType);
+                if (!releaseResult.IsSuccess)
+                    return Response.Failure($"Failed to release inventory reservation: {releaseResult.Message}", System.Net.HttpStatusCode.InternalServerError);
+
+                // Send rejection notification
+                await SendRejectionNotificationAsync(orderId, orderType, rejectorId, reviewNotes);
 
                 return Response.Success("Order rejected successfully");
             }
@@ -253,6 +263,229 @@ namespace Inventory.Services
                 OrderType.Release => await _unitOfWork.ReleaseOrders.FirstOrDefaultAsync(ro => ro.Number == orderId),
                 OrderType.Transfer => await _unitOfWork.TransferOrders.FirstOrDefaultAsync(to => to.Number == orderId),
                 _ => null
+            };
+        }
+
+        private async Task<Response> ExecuteInventoryChangesAsync(int orderId, OrderType orderType)
+        {
+            try
+            {
+                switch (orderType)
+                {
+                    case OrderType.Supply:
+                        return await ExecuteSupplyOrderInventoryChangesAsync(orderId);
+                    case OrderType.Release:
+                        return await ExecuteReleaseOrderInventoryChangesAsync(orderId);
+                    case OrderType.Transfer:
+                        return await ExecuteTransferOrderInventoryChangesAsync(orderId);
+                    default:
+                        return Response.Failure("Unknown order type", System.Net.HttpStatusCode.BadRequest);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Response.Failure($"Failed to execute inventory changes: {ex.Message}", System.Net.HttpStatusCode.InternalServerError);
+            }
+        }
+
+        private async Task<Response> ExecuteSupplyOrderInventoryChangesAsync(int orderId)
+        {
+            var supplyOrder = await _unitOfWork.SupplyOrders.GetQuery()
+                .Include(so => so.SO_Products)
+                .FirstOrDefaultAsync(so => so.Number == orderId);
+
+            if (supplyOrder == null)
+                return Response.Failure("Supply order not found", System.Net.HttpStatusCode.NotFound);
+
+            foreach (var product in supplyOrder.SO_Products)
+            {
+                // Update warehouse product inventory
+                var warehouseProduct = await _unitOfWork.WarehouseProducts
+                    .FirstOrDefaultAsync(wp => wp.War_Number == supplyOrder.War_Number && wp.Product_Code == product.Product_Code);
+
+                if (warehouseProduct == null)
+                {
+                    // Create new warehouse product entry
+                    warehouseProduct = new Warehouse_Product
+                    {
+                        War_Number = supplyOrder.War_Number,
+                        Product_Code = product.Product_Code,
+                        Total_Amount = product.SO_Amount,
+                        ReservedQuantity = 0,
+                        MFD = product.SO_MFD,
+                        EXP = product.SO_EXP
+                    };
+                    warehouseProduct.SetCreated(supplyOrder.CreatedBy ?? "System");
+                    _unitOfWork.WarehouseProducts.Add(warehouseProduct);
+                }
+                else
+                {
+                    // Update existing inventory
+                    warehouseProduct.Total_Amount += product.SO_Amount;
+                    warehouseProduct.SetUpdated(supplyOrder.CreatedBy ?? "System");
+                }
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            return Response.Success("Supply order inventory updated successfully");
+        }
+
+        private async Task<Response> ExecuteReleaseOrderInventoryChangesAsync(int orderId)
+        {
+            var releaseOrder = await _unitOfWork.ReleaseOrders.GetQuery()
+                .Include(ro => ro.RO_Products)
+                .FirstOrDefaultAsync(ro => ro.Number == orderId);
+
+            if (releaseOrder == null)
+                return Response.Failure("Release order not found", System.Net.HttpStatusCode.NotFound);
+
+            foreach (var product in releaseOrder.RO_Products)
+            {
+                // Update warehouse product inventory
+                var warehouseProduct = await _unitOfWork.WarehouseProducts
+                    .FirstOrDefaultAsync(wp => wp.War_Number == releaseOrder.War_Number && wp.Product_Code == product.Product_Code);
+
+                if (warehouseProduct == null)
+                    return Response.Failure($"Product {product.Product_Code} not found in warehouse {releaseOrder.War_Number}", System.Net.HttpStatusCode.NotFound);
+
+                if (warehouseProduct.AvailableQuantity < product.RO_Amount)
+                    return Response.Failure($"Insufficient inventory for product {product.Product_Code}", System.Net.HttpStatusCode.BadRequest);
+
+                warehouseProduct.Total_Amount -= product.RO_Amount;
+                warehouseProduct.SetUpdated(releaseOrder.CreatedBy ?? "System");
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            return Response.Success("Release order inventory updated successfully");
+        }
+
+        private async Task<Response> ExecuteTransferOrderInventoryChangesAsync(int orderId)
+        {
+            var transferOrder = await _unitOfWork.TransferOrders.GetQuery()
+                .Include(to => to.TO_Products)
+                .FirstOrDefaultAsync(to => to.Number == orderId);
+
+            if (transferOrder == null)
+                return Response.Failure("Transfer order not found", System.Net.HttpStatusCode.NotFound);
+
+            foreach (var product in transferOrder.TO_Products)
+            {
+                // Remove from source warehouse
+                var sourceWarehouseProduct = await _unitOfWork.WarehouseProducts
+                    .FirstOrDefaultAsync(wp => wp.War_Number == transferOrder.From && wp.Product_Code == product.Product_Code);
+
+                if (sourceWarehouseProduct == null)
+                    return Response.Failure($"Product {product.Product_Code} not found in source warehouse {transferOrder.From}", System.Net.HttpStatusCode.NotFound);
+
+                if (sourceWarehouseProduct.AvailableQuantity < product.TO_Amount)
+                    return Response.Failure($"Insufficient inventory for product {product.Product_Code} in source warehouse", System.Net.HttpStatusCode.BadRequest);
+
+                sourceWarehouseProduct.Total_Amount -= product.TO_Amount;
+                sourceWarehouseProduct.SetUpdated(transferOrder.CreatedBy ?? "System");
+
+                // Add to destination warehouse
+                var destWarehouseProduct = await _unitOfWork.WarehouseProducts
+                    .FirstOrDefaultAsync(wp => wp.War_Number == transferOrder.To && wp.Product_Code == product.Product_Code);
+
+                if (destWarehouseProduct == null)
+                {
+                    // Create new warehouse product entry
+                    destWarehouseProduct = new Warehouse_Product
+                    {
+                        War_Number = transferOrder.To,
+                        Product_Code = product.Product_Code,
+                        Total_Amount = product.TO_Amount,
+                        ReservedQuantity = 0,
+                        MFD = product.TO_MFD,
+                        EXP = product.TO_EXP
+                    };
+                    destWarehouseProduct.SetCreated(transferOrder.CreatedBy ?? "System");
+                    _unitOfWork.WarehouseProducts.Add(destWarehouseProduct);
+                }
+                else
+                {
+                    // Update existing inventory
+                    destWarehouseProduct.Total_Amount += product.TO_Amount;
+                    destWarehouseProduct.SetUpdated(transferOrder.CreatedBy ?? "System");
+                }
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            return Response.Success("Transfer order inventory updated successfully");
+        }
+
+        private async Task SendApprovalNotificationAsync(int orderId, OrderType orderType, string approverId, string reviewNotes)
+        {
+            try
+            {
+                var order = await GetOrderByIdAsync(orderId, orderType);
+                if (order == null) return;
+
+                var approver = await _userManager.FindByIdAsync(approverId);
+                var creator = await _userManager.FindByIdAsync(order.CreatedBy ?? "");
+
+                if (creator?.Email != null)
+                {
+                    var subject = $"Order {GetOrderTypePrefix(orderType)}-{orderId} Approved";
+                    var body = $@"
+                        <h2>Order Approval Notification</h2>
+                        <p>Your {orderType.ToString().ToLower()} order has been approved.</p>
+                        <p><strong>Order ID:</strong> {GetOrderTypePrefix(orderType)}-{orderId}</p>
+                        <p><strong>Approved By:</strong> {approver?.UserName ?? "Unknown"}</p>
+                        <p><strong>Review Notes:</strong> {reviewNotes}</p>
+                        <p><strong>Approved At:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    ";
+
+                    await _emailService.SendEmailAsync(creator.Email, subject, body);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the approval process
+                Console.WriteLine($"Failed to send approval notification: {ex.Message}");
+            }
+        }
+
+        private async Task SendRejectionNotificationAsync(int orderId, OrderType orderType, string rejectorId, string reviewNotes)
+        {
+            try
+            {
+                var order = await GetOrderByIdAsync(orderId, orderType);
+                if (order == null) return;
+
+                var rejector = await _userManager.FindByIdAsync(rejectorId);
+                var creator = await _userManager.FindByIdAsync(order.CreatedBy ?? "");
+
+                if (creator?.Email != null)
+                {
+                    var subject = $"Order {GetOrderTypePrefix(orderType)}-{orderId} Rejected";
+                    var body = $@"
+                        <h2>Order Rejection Notification</h2>
+                        <p>Your {orderType.ToString().ToLower()} order has been rejected.</p>
+                        <p><strong>Order ID:</strong> {GetOrderTypePrefix(orderType)}-{orderId}</p>
+                        <p><strong>Rejected By:</strong> {rejector?.UserName ?? "Unknown"}</p>
+                        <p><strong>Review Notes:</strong> {reviewNotes}</p>
+                        <p><strong>Rejected At:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    ";
+
+                    await _emailService.SendEmailAsync(creator.Email, subject, body);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the rejection process
+                Console.WriteLine($"Failed to send rejection notification: {ex.Message}");
+            }
+        }
+
+        private string GetOrderTypePrefix(OrderType orderType)
+        {
+            return orderType switch
+            {
+                OrderType.Supply => "SO",
+                OrderType.Release => "RO",
+                OrderType.Transfer => "TO",
+                _ => "UNK"
             };
         }
     }

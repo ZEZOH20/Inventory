@@ -3,6 +3,7 @@ using Inventory.DTO.UserDto.Requests;
 using Inventory.Interfaces;
 using Inventory.Models;
 using Inventory.Shares;
+using Inventory.Services.CurrentUser;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
@@ -20,9 +21,12 @@ namespace Inventory.Services
     public class SupplierCrudService : ISupplierCrudService
     {
         readonly IUnitOfWork _unitOfWork;
-        public SupplierCrudService(IUnitOfWork unitOfWork)
+        readonly ICurrentUser _currentUser;
+
+        public SupplierCrudService(IUnitOfWork unitOfWork, ICurrentUser currentUser)
         {
             _unitOfWork = unitOfWork;
+            _currentUser = currentUser;
         }
         public Response<PaginatedResponse<Supplier>> SelectAll(int page = 1, int pageSize = 10)
         {
@@ -49,6 +53,7 @@ namespace Inventory.Services
                 Fax = dto.Fax,
                 Mail = dto.Mail
             };
+            supplier.SetCreated(_currentUser.UserId);
             _unitOfWork.Suppliers.Add(supplier);
             _unitOfWork.Complete();
             return Response<Supplier>.Success(supplier);
@@ -76,6 +81,7 @@ namespace Inventory.Services
             if (!string.IsNullOrEmpty(dto.Domain))
                 supplier.Domain = dto.Domain;
 
+            supplier.SetUpdated(_currentUser.UserId);
             _unitOfWork.Complete();
 
             return Response<bool>.Success(true);
@@ -86,7 +92,7 @@ namespace Inventory.Services
             var supplier = _unitOfWork.Suppliers.GetById(id);
             if (supplier != null)
             {
-                _unitOfWork.Suppliers.Remove(supplier);
+                supplier.SoftDelete(_currentUser.UserId);
                 _unitOfWork.Complete();
                 return Response<bool>.Success(true);
             }

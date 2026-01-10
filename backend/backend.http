@@ -4,3 +4,175 @@ GET {{Inventory_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Test Approval Workflow - Phase 2
+# This test demonstrates the complete approval workflow for supply orders
+
+# 1. Create a supply order (as employee - will be pending)
+POST {{Inventory_HostAddress}}/api/supplyorder/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "supplier_ID": 1,
+  "war_Number": 1
+}
+
+###
+
+# 2. Add products to the supply order
+POST {{Inventory_HostAddress}}/api/so_product/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "SO_Number": 1,
+  "Product_Code": "PROD001",
+  "SO_Amount": 100,
+  "SO_Unit": 50,
+  "SO_Price": 10.50,
+  "SO_MFD": "2024-01-01",
+  "SO_EXP": "2025-01-01"
+}
+
+###
+
+# 3. Get pending orders (as manager)
+GET {{Inventory_HostAddress}}/api/approval/pending-orders
+Accept: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###
+
+# 4. Approve the supply order (as manager)
+POST {{Inventory_HostAddress}}/api/approval/supply-orders/1/approve
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "reviewNotes": "Approved - inventory levels look good"
+}
+
+###
+
+# 5. Check warehouse inventory was updated
+GET {{Inventory_HostAddress}}/api/warehouse/getAll
+Accept: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###
+
+# 6. Test rejection workflow - Create another supply order
+POST {{Inventory_HostAddress}}/api/supplyorder/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "supplier_ID": 1,
+  "war_Number": 1
+}
+
+###
+
+# 7. Add products to the second supply order
+POST {{Inventory_HostAddress}}/api/so_product/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "SO_Number": 2,
+  "Product_Code": "PROD002",
+  "SO_Amount": 75,
+  "SO_Unit": 25,
+  "SO_Price": 15.00,
+  "SO_MFD": "2024-02-01",
+  "SO_EXP": "2025-02-01"
+}
+
+###
+
+# 8. Reject the second supply order
+POST {{Inventory_HostAddress}}/api/approval/supply-orders/2/reject
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "reviewNotes": "Rejected - insufficient budget"
+}
+
+###
+
+# 9. Test release order approval workflow
+POST {{Inventory_HostAddress}}/api/releaseorder/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "customer_ID": 1,
+  "war_Number": 1
+}
+
+###
+
+# 10. Add products to release order
+POST {{Inventory_HostAddress}}/api/ro_product/create
+Content-Type: application/json
+Authorization: Bearer YOUR_EMPLOYEE_JWT_TOKEN
+
+{
+  "RO_Number": 1,
+  "Product_Code": "PROD001",
+  "RO_Amount": 20,
+  "RO_Unit": 10,
+  "RO_Price": 12.00
+}
+
+###
+
+# 11. Approve release order
+POST {{Inventory_HostAddress}}/api/approval/release-orders/1/approve
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "reviewNotes": "Approved - customer order confirmed"
+}
+
+###
+
+# 12. Test transfer order approval workflow
+POST {{Inventory_HostAddress}}/api/transferorder/create
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "from_War_Number": 1,
+  "to_War_Number": 2
+}
+
+###
+
+# 13. Add products to transfer order
+POST {{Inventory_HostAddress}}/api/to_product/create
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "TO_Number": 1,
+  "Product_Code": "PROD001",
+  "TO_Amount": 30,
+  "TO_Unit": 15
+}
+
+###
+
+# 14. Approve transfer order
+POST {{Inventory_HostAddress}}/api/approval/transfer-orders/1/approve
+Content-Type: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+{
+  "reviewNotes": "Approved - warehouse 2 needs stock"
+}
+
+###
