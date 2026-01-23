@@ -27,24 +27,24 @@ namespace Inventory.Controllers
         }
 
         [HttpGet("getAll")]
-        public IActionResult GetAll(int page = 1, int pageSize = 10)
+        public IActionResult GetAll()
         {
             try
             {
-                var response = _service.SelectAll(page, pageSize);
+                // Get all data without pagination by using a large page size
+                var response = _service.SelectAll(page: 1, pageSize: int.MaxValue);
                 if (!response.IsSuccess)
                     return BadRequest(response.Message);
 
-                var paginatedData = new
-                {
-                    Data = response.Data.Data.Select(entity => new UserResponseDTO((dynamic)entity)),
-                    response.Data.Page,
-                    response.Data.PageSize,
-                    response.Data.TotalCount,
-                    response.Data.TotalPages
-                };
+                var data = response.Data.Data.Select(entity => new UserResponseDTO((dynamic)entity));
 
-                return Ok(paginatedData);
+                return Ok(new
+                {
+                    Data = data,
+                    Message = "Data retrieved successfully",
+                    IsSuccess = true,
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
