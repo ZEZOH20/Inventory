@@ -16,11 +16,6 @@ namespace Inventory.DTO.UserDto.Validations
             .MaximumLength(100)
             .Unless(x => string.IsNullOrWhiteSpace(x.Name));
 
-            RuleFor(x => x.Phone)
-                .Matches(@"^01[0125]\d{8}$")
-                .Unless(x => string.IsNullOrWhiteSpace(x.Phone))
-                .WithMessage("Phone must start with 010, 011, 012, or 015 and be 11 digits");
-
             RuleFor(x => x.Mail)
                 .EmailAddress()
                 .Unless(x => string.IsNullOrWhiteSpace(x.Mail))

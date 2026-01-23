@@ -11,11 +11,6 @@ namespace Inventory.DTO.UserDto.Validations
              .NotEmpty().WithMessage("Name is required")
              .MaximumLength(100).WithMessage("Name cannot exceed 100 characters");
 
-            RuleFor(x => x.Phone)
-                .NotEmpty().WithMessage("Phone is required")
-                .Matches(@"^01[0125]\d{8}$")
-                .WithMessage("Phone must start with 010, 011, 012, or 015 and be 11 digits");
-
             RuleFor(x => x.Mail)
                 .NotEmpty().WithMessage("Email is required")
                 .EmailAddress().WithMessage("Please enter a valid email address");
