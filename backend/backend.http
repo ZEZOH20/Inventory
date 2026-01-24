@@ -176,3 +176,10 @@ Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
 }
 
 ###
+
+# 15. Get all TO_Products (test for circular reference fix)
+GET {{Inventory_HostAddress}}/api/to_product/getAll
+Accept: application/json
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###

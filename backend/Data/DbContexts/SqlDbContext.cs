@@ -4,6 +4,7 @@ using Inventory.Data.Configrations;
 using Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Inventory.Data.DbContexts
 {
@@ -28,6 +29,19 @@ namespace Inventory.Data.DbContexts
              .WithMany()
              .HasForeignKey(t => t.From)
              .OnDelete(DeleteBehavior.Restrict);
+
+            // Global query filter for soft delete
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    var parameter = Expression.Parameter(entityType.ClrType, "e");
+                    var property = Expression.Property(parameter, "IsDeleted");
+                    var notDeleted = Expression.Not(property);
+                    var lambda = Expression.Lambda(notDeleted, parameter);
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+                }
+            }
         }
         // Removed DbSet<User> as it's now ApplicationUser via Identity
         public DbSet<Supplier> Suppliers { get; set; }

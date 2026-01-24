@@ -26,5 +26,7 @@ namespace Inventory.DTO.ReportsDto.Responses
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
+        public DateTime? ManufacturingDate { get; set; }
+        public DateTime? ExpirationDate { get; set; }
     }
 }

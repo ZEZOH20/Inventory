@@ -6,7 +6,8 @@ namespace Inventory.DTO.UserDto.Validations
 {
     public class UserCreateDTOValidator : AbstractValidator<UserCreateDTO>
     {
-        public UserCreateDTOValidator(){
+        public UserCreateDTOValidator()
+        {
             RuleFor(x => x.Name)
              .NotEmpty().WithMessage("Name is required")
              .MaximumLength(100).WithMessage("Name cannot exceed 100 characters");
@@ -16,12 +17,14 @@ namespace Inventory.DTO.UserDto.Validations
                 .EmailAddress().WithMessage("Please enter a valid email address");
 
             // Optional fields
-            When(x => !string.IsNullOrWhiteSpace(x.Fax), () => {
+            When(x => !string.IsNullOrWhiteSpace(x.Fax), () =>
+            {
                 RuleFor(x => x.Fax)
                     .MaximumLength(50).WithMessage("Fax cannot exceed 50 characters");
             });
 
-            When(x => !string.IsNullOrWhiteSpace(x.Domain), () => {
+            When(x => !string.IsNullOrWhiteSpace(x.Domain), () =>
+            {
                 RuleFor(x => x.Domain)
                     .MaximumLength(100).WithMessage("Domain cannot exceed 100 characters");
             });

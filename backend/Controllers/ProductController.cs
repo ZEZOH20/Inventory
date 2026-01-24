@@ -12,6 +12,7 @@ using System.Drawing;
 using System.IO.Pipelines;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Authorization;
+using Inventory.Services;
 
 namespace Inventory.Controllers
 {
@@ -21,9 +22,11 @@ namespace Inventory.Controllers
     public class ProductController : ControllerBase
     {
         readonly SqlDbContext _conn;
-        public ProductController(SqlDbContext conn)
+        readonly IImageService _imageService;
+        public ProductController(SqlDbContext conn, IImageService imageService)
         {
             _conn = conn;
+            _imageService = imageService;
         }
         [HttpGet("getAll")]
         public IActionResult GetAll()
@@ -35,7 +38,8 @@ namespace Inventory.Controllers
                     {
                         Code = p.Code,
                         Name = p.Name,
-                        Unit = p.Unit
+                        Unit = p.Unit,
+                        Image = p.Image
                     })
                     .ToList();
 
@@ -47,15 +51,22 @@ namespace Inventory.Controllers
             }
         }
         [HttpPost("create")]
-        public IActionResult Create([FromBody] ProductCreateDTO dto)
+        public async Task<IActionResult> Create([FromForm] ProductCreateDTO dto)
         {
 
             try
             {
+                string? imagePath = null;
+                if (dto.ImageFile != null)
+                {
+                    imagePath = await _imageService.UploadImageAsync(dto.ImageFile, "products");
+                }
+
                 _conn.Products.Add(new Product
                 {
                     Name = dto.Name,
-                    Unit = dto.Unit   // I will display all units to choose between them  
+                    Unit = dto.Unit,   // I will display all units to choose between them  
+                    Image = imagePath
                 });
                 _conn.SaveChanges();
 
@@ -85,7 +96,7 @@ namespace Inventory.Controllers
             return Ok(units);
         }
         [HttpPut("Update")]
-        public IActionResult UpdateBYId([FromBody] ProductUpdateDTO dto)
+        public async Task<IActionResult> UpdateBYId([FromForm] ProductUpdateDTO dto)
         {
             var validationResult = dto.Code > 0;
 
@@ -94,7 +105,7 @@ namespace Inventory.Controllers
 
             try
             {
-                var result = UpdateProduct(dto);
+                var result = await UpdateProduct(dto);
 
                 return !result ?
                      NotFound($"Product Code:  {dto.Code} not found") :
@@ -108,7 +119,7 @@ namespace Inventory.Controllers
         }
 
         [HttpDelete("delete/{code}")]
-        public IActionResult Delete(int code)
+        public async Task<IActionResult> Delete(int code)
         {
             //validate ID
             if (code <= 0)
@@ -121,6 +132,12 @@ namespace Inventory.Controllers
                 if (Product == null)
                     return BadRequest($"the Product code {code} not found ");
 
+                // Delete associated image if exists
+                if (!string.IsNullOrEmpty(Product.Image))
+                {
+                    await _imageService.DeleteImageAsync(Product.Image);
+                }
+
                 _conn.Products.Remove(Product);
                 _conn.SaveChanges();
 
@@ -132,7 +149,7 @@ namespace Inventory.Controllers
             }
         }
 
-        bool UpdateProduct(ProductUpdateDTO dto)
+        async Task<bool> UpdateProduct(ProductUpdateDTO dto)
         {
             var Product = _conn.Products.FirstOrDefault(p => p.Code == dto.Code);
 
@@ -145,6 +162,17 @@ namespace Inventory.Controllers
 
             //if (!string.IsNullOrEmpty(dto.Unit))
             //     Product.Unit = dto.Unit;
+
+            if (dto.ImageFile != null)
+            {
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(Product.Image))
+                {
+                    await _imageService.DeleteImageAsync(Product.Image);
+                }
+                // Upload new image
+                Product.Image = await _imageService.UploadImageAsync(dto.ImageFile, "products");
+            }
 
             _conn.SaveChanges();
 

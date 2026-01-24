@@ -1,11 +1,14 @@
 ﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.SO_ProductDto.Requests;
 using Inventory.DTO.SO_ProductDto.Validators;
+using Inventory.DTO.SO_ProductDto.Responses;
 using Inventory.DTO.Warehouse_ProductDto.Requests;
 using Inventory.Models;
 using Inventory.Services;
+using Inventory.Services.CurrentUser;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 
 
@@ -19,24 +22,58 @@ namespace Inventory.Controllers
         readonly SqlDbContext _conn;
         readonly SO_ProductCreateDTOValidator _CreateDTOValidator;
         readonly IWarehouse_ProductService _Warehouse_ProductService;
+        readonly ICurrentUser _currentUser;
         public SO_ProductController(
             SqlDbContext conn,
             SO_ProductCreateDTOValidator CreateDTOValidator,
-            IWarehouse_ProductService Warehouse_ProductService
+            IWarehouse_ProductService Warehouse_ProductService,
+            ICurrentUser currentUser
             )
         {
             _conn = conn;
             _CreateDTOValidator = CreateDTOValidator;
             _Warehouse_ProductService = Warehouse_ProductService;
+            _currentUser = currentUser;
         }
 
         [HttpGet("getAll")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var products = _conn.SO_Products.Select(s => s)
-                    .ToList();
+                // Get accessible warehouse IDs based on user role
+                var accessibleWarehouseIds = await GetAccessibleWarehouseIdsAsync(_currentUser.UserId, _currentUser.UserRole);
+
+                var products = await _conn.SO_Products
+                    .Include(sop => sop.Supply_Order)
+                        .ThenInclude(so => so.Warehouse)
+                    .Include(sop => sop.Supply_Order)
+                        .ThenInclude(so => so.Supplier)
+                    .Include(sop => sop.Product)
+                    .Where(sop => accessibleWarehouseIds.Contains(sop.Supply_Order.War_Number))
+                    .Select(sop => new SO_ProductResponseDTO
+                    {
+                        Id = sop.Id,
+                        SO_Amount = sop.SO_Amount,
+                        SO_Unit = sop.SO_Unit,
+                        SO_Price = sop.SO_Price,
+                        SO_MFD = sop.SO_MFD,
+                        SO_EXP = sop.SO_EXP,
+                        SO_Number = sop.SO_Number,
+                        Product_Code = sop.Product_Code,
+                        Product = new Inventory.DTO.ProductDto.Responses.ProductResponseDTO
+                        {
+                            Code = sop.Product.Code,
+                            Name = sop.Product.Name,
+                            Unit = sop.Product.Unit,
+                            Image = sop.Product.Image
+                        },
+                        SupplierName = sop.Supply_Order.Supplier.Name,
+                        WarehouseName = sop.Supply_Order.Warehouse.Name,
+                        S_Date = sop.Supply_Order.S_Date,
+                        Status = sop.Supply_Order.Status
+                    })
+                    .ToListAsync();
 
                 return Ok(products);
 
@@ -48,7 +85,7 @@ namespace Inventory.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] SO_ProductCreateDTO dto)
+        public async Task<IActionResult> Create([FromBody] SO_ProductCreateDTO dto)
         {
             //validation
             var validationResult = _CreateDTOValidator.Validate(dto);
@@ -79,7 +116,7 @@ namespace Inventory.Controllers
                 });
 
                 //step 2 : add product to warehouse_products table
-                AutomaticAddProductToWarehouse(dto);
+                await AutomaticAddProductToWarehouse(dto);
 
                 _conn.SaveChanges();
 
@@ -92,7 +129,7 @@ namespace Inventory.Controllers
             }
         }
 
-        bool AutomaticAddProductToWarehouse(SO_ProductCreateDTO dto)
+        async Task<bool> AutomaticAddProductToWarehouse(SO_ProductCreateDTO dto)
         {
             var SupplyOrder = _conn.Supply_Orders.FirstOrDefault(so => so.Number == dto.SO_Number);
 
@@ -111,11 +148,31 @@ namespace Inventory.Controllers
             };
 
             //create actual product 
-            var createResponse = _Warehouse_ProductService.CreateWarehouse_Product(wp_dto);
+            var createResponse = await _Warehouse_ProductService.CreateWarehouse_Product(wp_dto);
             if (!createResponse.IsSuccess)
                 return false;
 
             return true;
+        }
+
+        private async Task<List<int>> GetAccessibleWarehouseIdsAsync(string userId, string userRole)
+        {
+            if (userRole == "Owner")
+            {
+                // Owners can access only warehouses they created
+                return await _conn.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
+            }
+            else if (userRole == "Manager")
+            {
+                // Managers can only access their assigned warehouse
+                var user = await _conn.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                return user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+            }
+            else
+            {
+                // Employees have no warehouse access
+                return new List<int>();
+            }
         }
 
 

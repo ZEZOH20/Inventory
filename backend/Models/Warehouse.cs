@@ -13,7 +13,7 @@ namespace Inventory.Models
         public required string Street { get; set; }
 
         [ForeignKey("Manager")]
-        public required string ManagerId { get; set; }
+        public string? ManagerId { get; set; }
         public ApplicationUser? Manager { get; set; } //Navigation Property
 
         public List<Warehouse_Product>? Warehouse_Products { get; set; }

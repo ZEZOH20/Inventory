@@ -102,7 +102,9 @@ namespace Inventory.Services
                         Unit = rop.RO_Unit,
                         Quantity = (decimal)rop.RO_Amount,
                         UnitPrice = (decimal)rop.RO_Price,
-                        TotalPrice = (decimal)(rop.RO_Amount * rop.RO_Price)
+                        TotalPrice = (decimal)(rop.RO_Amount * rop.RO_Price),
+                        ManufacturingDate = rop.RO_MFD,
+                        ExpirationDate = rop.RO_EXP
                     }).ToList() ?? new List<ReleaseOrderProductDto>(),
                     TotalValue = Convert.ToDecimal(ro.RO_Products?.Sum(rop => rop.RO_Amount * rop.RO_Price) ?? 0),
                 }).ToList();
@@ -255,8 +257,8 @@ namespace Inventory.Services
         {
             if (userRole == "Owner")
             {
-                // Owners can access all warehouses
-                return await _context.Warehouses.Select(w => w.Number).ToListAsync();
+                // Owners can access only warehouses they created
+                return await _context.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
             }
             else if (userRole == "Manager")
             {
@@ -423,6 +425,8 @@ namespace Inventory.Services
                                                 columns.ConstantColumn(80);
                                                 columns.ConstantColumn(80);
                                                 columns.ConstantColumn(80);
+                                                columns.ConstantColumn(80);
+                                                columns.ConstantColumn(80);
                                             });
 
                                             table.Header(header =>
@@ -432,6 +436,8 @@ namespace Inventory.Services
                                                 header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Qty").SemiBold();
                                                 header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit Price").SemiBold();
                                                 header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Total").SemiBold();
+                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("MFD").SemiBold();
+                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("EXP").SemiBold();
                                             });
 
                                             foreach (var product in order.Products)
@@ -441,6 +447,8 @@ namespace Inventory.Services
                                                 table.Cell().PaddingVertical(5).Text(product?.Quantity.ToString("N2") ?? "0.00");
                                                 table.Cell().PaddingVertical(5).Text(product?.UnitPrice.ToString("C") ?? "$0.00");
                                                 table.Cell().PaddingVertical(5).Text(product?.TotalPrice.ToString("C") ?? "$0.00");
+                                                table.Cell().PaddingVertical(5).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                                                table.Cell().PaddingVertical(5).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
                                             }
                                         });
                                     }

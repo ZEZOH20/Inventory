@@ -10,11 +10,11 @@ namespace Inventory.Services
 {
     public interface IWarehouse_ProductService
     {
-        Response CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
+        Task<Response> CreateWarehouse_Product(Warehouse_ProductCreateDTO dto);
         bool CreationIsValid(Warehouse_ProductCreateDTO dto);
         Warehouse_Product? ProductExistInWarehouse(Warehouse_ProductCreateDTO dto, DateTime mfdDate, DateTime expDate);
         Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate);
-        Response<Warehouse_Product> Delete(int Id);
+        Task<Response<Warehouse_Product>> Delete(int Id);
     }
     public class Warehouse_ProductService : IWarehouse_ProductService
     {
@@ -28,7 +28,7 @@ namespace Inventory.Services
         }
 
 
-        public Response CreateWarehouse_Product(Warehouse_ProductCreateDTO dto)
+        public async Task<Response> CreateWarehouse_Product(Warehouse_ProductCreateDTO dto)
         {
 
             //validation
@@ -82,9 +82,9 @@ namespace Inventory.Services
                         Total_Price = dto.Amount * dto.Price,
                     };
                     newProduct.SetCreated(_currentUser.UserId);
-                    _unitOfWork.WarehouseProducts.AddAsync(newProduct);
+                    await _unitOfWork.WarehouseProducts.AddAsync(newProduct);
                 }
-                _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
 
                 return Response.Success("Product in Warehouse Created successfully");
 
@@ -117,8 +117,8 @@ namespace Inventory.Services
             wp.Supplier_ID == dto.Supplier_ID &&
             wp.Product_Code == dto.Product_Code &&
             wp.War_Number == dto.War_Number &&
-            wp.EXP == expDate &&
-            wp.MFD == mfdDate
+            wp.EXP.Date == expDate.Date &&
+            wp.MFD.Date == mfdDate.Date
          );
 
         public Warehouse_Product? ProductExistInWarehouse(int Supplier_ID, int Product_Code, int War_Number, DateTime mfdDate, DateTime expDate)
@@ -126,10 +126,10 @@ namespace Inventory.Services
          wp.Supplier_ID == Supplier_ID &&
          wp.Product_Code == Product_Code &&
          wp.War_Number == War_Number &&
-         wp.EXP == expDate &&
-         wp.MFD == mfdDate
+         wp.EXP.Date == expDate.Date &&
+         wp.MFD.Date == mfdDate.Date
       );
-        public Response<Warehouse_Product> Delete(int Id)
+        public async Task<Response<Warehouse_Product>> Delete(int Id)
         {
             try
             {
@@ -143,7 +143,7 @@ namespace Inventory.Services
                 // Soft delete the product
                 warehouseProduct.SoftDelete(_currentUser.UserId);
                 _unitOfWork.WarehouseProducts.Update(warehouseProduct);
-                _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
 
                 return Response<Warehouse_Product>.Success(warehouseProduct, "Deleted successfully");
             }

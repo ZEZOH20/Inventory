@@ -168,15 +168,17 @@ var app = builder.Build();
 // if (app.Environment.IsDevelopment())
 // {
 // }
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 //CORS
 app.UseCors("AllowReactApp");
 //CORS
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 

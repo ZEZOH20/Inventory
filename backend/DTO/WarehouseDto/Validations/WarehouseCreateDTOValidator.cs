@@ -23,9 +23,6 @@ namespace Inventory.DTO.WarehouseDto.Validations
             RuleFor(x => x.Street)
                 .NotEmpty().WithMessage("Street is required")
                 .MaximumLength(100).WithMessage("Street cannot exceed 100 characters");
-
-            RuleFor(x => x.ManagerId)
-                .NotEmpty().WithMessage("Manager ID is required");
         }
     }
 }

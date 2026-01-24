@@ -35,12 +35,15 @@ namespace Inventory.Controllers
 
         }
         [HttpGet("getAll")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
+                // Get accessible warehouse IDs based on user role
+                var accessibleWarehouseIds = await GetAccessibleWarehouseIdsAsync(_currentUser.UserId, _currentUser.UserRole);
+
                 var warhouses = _conn.Warehouses
-                        .Where(w => !w.IsDeleted)
+                        .Where(w => accessibleWarehouseIds.Contains(w.Number))
                         .Select(w => new WarehouseResponseDTO
                         {
                             Number = w.Number,
@@ -48,13 +51,13 @@ namespace Inventory.Controllers
                             Region = w.Region,
                             City = w.City,
                             Street = w.Street,
-                            Manager = new UserResponseDTO
+                            Manager = w.Manager != null ? new UserResponseDTO
                             {
                                 Id = w.Manager.Id,
                                 Name = w.Manager.Name,
                                 Phone = w.Manager.Phone ?? "",
                                 Mail = w.Manager.Email ?? ""
-                            },
+                            } : null,
                             Warehouse_Products = w.Warehouse_Products.Select(wp => new Warehouse_ProductResponseDTO
                             {
                                 Id = wp.Id,
@@ -96,10 +99,12 @@ namespace Inventory.Controllers
             {
 
                 // Check if manager already assigned to another warehouse
-                string result = CheckWarehouseManaged(dto.ManagerId);
-                bool WarehouseManaged = !string.IsNullOrEmpty(result);
-                if (WarehouseManaged)
-                    return BadRequest(result);
+                if (!string.IsNullOrEmpty(dto.ManagerId))
+                {
+                    string result = CheckWarehouseManaged(dto.ManagerId);
+                    if (!string.IsNullOrEmpty(result))
+                        return BadRequest(result);
+                }
 
 
                 var warehouse = new Warehouse
@@ -134,15 +139,13 @@ namespace Inventory.Controllers
 
             try
             {
-                //check if manager id enterd
-                if (string.IsNullOrEmpty(dto.ManagerId))
-                    return BadRequest("ManagerId can't be null");
-
                 // Check if manager already assigned to another warehouse
-                string message = CheckWarehouseManaged(dto.ManagerId);
-                bool WarehouseManaged = !string.IsNullOrEmpty(message);
-                if (WarehouseManaged)
-                    return BadRequest(message);
+                if (!string.IsNullOrEmpty(dto.ManagerId))
+                {
+                    string message = CheckWarehouseManaged(dto.ManagerId);
+                    if (!string.IsNullOrEmpty(message))
+                        return BadRequest(message);
+                }
 
 
                 var result = UpdateWarehouse(dto);
@@ -185,6 +188,9 @@ namespace Inventory.Controllers
 
         string CheckWarehouseManaged(string ManagerId)
         {
+            if (string.IsNullOrEmpty(ManagerId))
+                return "";
+
             //check if Manager is Exists
             var ManagerExists = _conn.Users.Any(m => m.Id == ManagerId);
 
@@ -193,7 +199,6 @@ namespace Inventory.Controllers
 
             // Check if manager already assigned to another warehouse
             var existingWarehouse = _conn.Warehouses
-            .Where(w => !w.IsDeleted)
             .Include(w => w.Manager)
             .FirstOrDefault(w => w.ManagerId == ManagerId);
 
@@ -228,13 +233,33 @@ namespace Inventory.Controllers
             if (!string.IsNullOrEmpty(dto.City))
                 warehouse.City = dto.City;
 
-            if (!string.IsNullOrEmpty(dto.ManagerId))
+            if (dto.ManagerId != null)
                 warehouse.ManagerId = dto.ManagerId;
 
             warehouse.SetUpdated(_currentUser.UserId, _currentUser.GetUserIp());
             _conn.SaveChanges();
 
             return true;
+        }
+
+        private async Task<List<int>> GetAccessibleWarehouseIdsAsync(string userId, string userRole)
+        {
+            if (userRole == "Owner")
+            {
+                // Owners can access only warehouses they created
+                return await _conn.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
+            }
+            else if (userRole == "Manager")
+            {
+                // Managers can only access their assigned warehouse
+                var user = await _conn.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                return user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+            }
+            else
+            {
+                // Employees have no warehouse access (though this controller restricts to Owner,Manager)
+                return new List<int>();
+            }
         }
     }
 }

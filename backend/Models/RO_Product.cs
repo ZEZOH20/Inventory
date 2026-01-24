@@ -16,6 +16,14 @@ namespace Inventory.Models
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double RO_Price { get; set; }
 
+        [Required(ErrorMessage = "Please add Manufacturing (MFD) Date")]
+        [DataType(DataType.Date)]
+        public DateTime RO_MFD { get; set; }
+
+        [Required(ErrorMessage = "Please add Expire (EXP) Date")]
+        [DataType(DataType.Date)]
+        public DateTime RO_EXP { get; set; }
+
 
         [ForeignKey("Release_Order")]
         public int RO_Number { get; set; }

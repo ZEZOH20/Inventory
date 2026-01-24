@@ -2,8 +2,10 @@
 using backend.DTO.TransferOrderDto.Validations;
 using Inventory.Data.DbContexts;
 using Inventory.Models;
+using Inventory.Services.CurrentUser;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Inventory.Controllers
@@ -15,29 +17,38 @@ namespace Inventory.Controllers
     {
         readonly SqlDbContext _conn;
         readonly TransferOrderCreateDTOValidator _CreateDTOValidator;
+        readonly ICurrentUser _currentUser;
         public TransferOrderController(
             SqlDbContext conn,
-            TransferOrderCreateDTOValidator CreateDTOValidator
+            TransferOrderCreateDTOValidator CreateDTOValidator,
+            ICurrentUser currentUser
             )
         {
             _conn = conn;
             _CreateDTOValidator = CreateDTOValidator;
+            _currentUser = currentUser;
         }
 
         [HttpGet("getAll")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var orders = _conn.Transfer_Orders.Select(s => s)
-                    .ToList();
+                // Get accessible warehouse IDs based on user role
+                var accessibleWarehouseIds = await GetAccessibleWarehouseIdsAsync(_currentUser.UserId, _currentUser.UserRole);
+
+                var orders = await _conn.Transfer_Orders
+                    .Where(to => accessibleWarehouseIds.Contains(to.From) ||
+                                 accessibleWarehouseIds.Contains(to.To))
+                    .Select(s => s)
+                    .ToListAsync();
 
                 return Ok(orders);
 
             }
             catch (Exception ex)
             {
-                return BadRequest("Can't get Supply orders" + ex.Message);
+                return BadRequest("Can't get Transfer orders" + ex.Message);
             }
         }
 
@@ -69,7 +80,28 @@ namespace Inventory.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Can't Create Transfer Orders" + ex.Message);
+                var innerMessage = ex.InnerException?.Message ?? "No inner exception";
+                return BadRequest($"Can't Create Transfer Orders: {ex.Message}. Inner: {innerMessage}");
+            }
+        }
+
+        private async Task<List<int>> GetAccessibleWarehouseIdsAsync(string userId, string userRole)
+        {
+            if (userRole == "Owner")
+            {
+                // Owners can access only warehouses they created
+                return await _conn.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
+            }
+            else if (userRole == "Manager")
+            {
+                // Managers can only access their assigned warehouse
+                var user = await _conn.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                return user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+            }
+            else
+            {
+                // Employees have no warehouse access
+                return new List<int>();
             }
         }
 

@@ -29,9 +29,9 @@ namespace Inventory.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] Warehouse_ProductCreateDTO dto)
+        public async Task<IActionResult> Create([FromBody] Warehouse_ProductCreateDTO dto)
         {
-            var response = _Warehouse_ProductService.CreateWarehouse_Product(dto);
+            var response = await _Warehouse_ProductService.CreateWarehouse_Product(dto);
             if (!response.IsSuccess)
                 return BadRequest(response.Message);
             return Ok(response.Message);

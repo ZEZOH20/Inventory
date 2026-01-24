@@ -14,8 +14,6 @@ public abstract class AuditableEntity
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
     public string? DeletedBy { get; private set; }
-    [Timestamp]
-    public byte[] RowVersion { get; private set; } = null!;
 
     public void SetCreated(string userId, string? ip = null)
     {

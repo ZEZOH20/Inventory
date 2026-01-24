@@ -5,7 +5,8 @@ namespace Inventory.DTO.UserDto.Validations
 {
     public class UserUpdateDTOValidator : AbstractValidator<UserUpdateDTO>
     {
-        public UserUpdateDTOValidator() {
+        public UserUpdateDTOValidator()
+        {
             RuleFor(x => x.Id).NotEmpty().GreaterThan(0);
 
             RuleFor(x => x)

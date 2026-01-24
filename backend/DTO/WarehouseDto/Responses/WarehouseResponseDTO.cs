@@ -11,9 +11,9 @@ namespace Inventory.DTO.WarehouseDto.Responses
         public string Region { get; set; }
         public string City { get; set; }
         public string Street { get; set; }
-        public UserResponseDTO Manager { get; set; }
+        public UserResponseDTO? Manager { get; set; }
         public List<Warehouse_ProductResponseDTO> Warehouse_Products { get; set; }
 
-        
+
     }
 }

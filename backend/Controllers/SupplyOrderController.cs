@@ -43,12 +43,17 @@ namespace Inventory.Controllers
         }
 
         [HttpGet("getAll")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var products = _conn.Supply_Orders.Select(s => s)
-                    .ToList();
+                // Get accessible warehouse IDs based on user role
+                var accessibleWarehouseIds = await GetAccessibleWarehouseIdsAsync(_currentUser.UserId, _currentUser.UserRole);
+
+                var products = await _conn.Supply_Orders
+                    .Where(so => accessibleWarehouseIds.Contains(so.War_Number))
+                    .Select(s => s)
+                    .ToListAsync();
 
                 return Ok(products);
 
@@ -119,7 +124,8 @@ namespace Inventory.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Can't Create Supply Orders" + ex.Message);
+                var innerMessage = ex.InnerException?.Message ?? "No inner exception";
+                return BadRequest($"Can't Create Supply Orders: {ex.Message}. Inner: {innerMessage}");
             }
         }
 
@@ -136,6 +142,26 @@ namespace Inventory.Controllers
                 return StatusCode((int)result.StatusCode, result.Message);
 
             return Ok(result.Message);
+        }
+
+        private async Task<List<int>> GetAccessibleWarehouseIdsAsync(string userId, string userRole)
+        {
+            if (userRole == "Owner")
+            {
+                // Owners can access only warehouses they created
+                return await _conn.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
+            }
+            else if (userRole == "Manager")
+            {
+                // Managers can only access their assigned warehouse
+                var user = await _userManager.FindByIdAsync(userId);
+                return user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+            }
+            else
+            {
+                // Employees have no warehouse access
+                return new List<int>();
+            }
         }
     }
 
