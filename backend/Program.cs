@@ -1,4 +1,4 @@
-using Inventory.Data.DbContexts;
+﻿using Inventory.Data.DbContexts;
 using Inventory.DTO.UserDto.Validations;
 using Inventory.Services;
 using Microsoft.EntityFrameworkCore;
@@ -109,10 +109,19 @@ builder.Services.AddScoped<IReportingService, ReportingService>();
 
 // Configure FluentEmail
 builder.Services.AddFluentEmail(builder.Configuration["Smtp:FromEmail"])
-    .AddSmtpSender(new System.Net.Mail.SmtpClient(builder.Configuration["Smtp:Host"], int.Parse(builder.Configuration["Smtp:Port"] ?? "587"))
+    .AddSmtpSender(() =>
     {
-        Credentials = new System.Net.NetworkCredential(builder.Configuration["Smtp:Username"], builder.Configuration["Smtp:Password"]),
-        EnableSsl = true
+        var smtpClient = new System.Net.Mail.SmtpClient(builder.Configuration["Smtp:Host"])
+        {
+            Port = int.Parse(builder.Configuration["Smtp:Port"] ?? "587"),
+            Credentials = new System.Net.NetworkCredential(
+                builder.Configuration["Smtp:Username"],
+                builder.Configuration["Smtp:Password"]
+            ),
+            EnableSsl = true,
+            UseDefaultCredentials = false  // ← Critical: Add this explicitly
+        };
+        return smtpClient;
     });
 
 // Register Repository and Unit of Work

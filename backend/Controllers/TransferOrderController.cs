@@ -65,17 +65,21 @@ namespace Inventory.Controllers
             //validation
             try
             {
-                _conn.Transfer_Orders.Add(new Transfer_Order
+                var transferOrder = new Transfer_Order
                 {
                     Supplier_ID = dto.Supplier_ID,
                     From = dto.From,
                     To = dto.To,
                     T_Date = DateTime.UtcNow,
-                });
+                };
 
+                _conn.Transfer_Orders.Add(transferOrder);
                 _conn.SaveChanges();
 
-                return Ok("Transfer Order Created successfully");
+                return Ok(new {
+                     message = "Transfer Order Created Successfully",
+                     orderId = transferOrder.Number 
+                     });
 
             }
             catch (Exception ex)

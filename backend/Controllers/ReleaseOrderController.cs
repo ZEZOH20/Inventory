@@ -65,16 +65,21 @@ namespace Inventory.Controllers
             //validation
             try
             {
-                _conn.Release_Orders.Add(new Release_Order
+                var releaseOrder = new Release_Order
                 {
                     Customer_ID = dto.Customer_ID,
                     War_Number = dto.War_Number,
                     R_Date = DateTime.UtcNow,
-                });
+                };
 
+                _conn.Release_Orders.Add(releaseOrder);
                 _conn.SaveChanges();
 
-                return Ok("Release Order Created successfully");
+                return Ok(new
+                {
+                    message = "Release Order Created Successfully",
+                    orderId = releaseOrder.Number
+                });
 
             }
             catch (Exception ex)

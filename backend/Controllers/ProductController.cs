@@ -160,8 +160,8 @@ namespace Inventory.Controllers
             if (!string.IsNullOrEmpty(dto.Name))
                 Product.Name = dto.Name;
 
-            //if (!string.IsNullOrEmpty(dto.Unit))
-            //     Product.Unit = dto.Unit;
+            if (!string.IsNullOrEmpty(dto.Unit))
+                Product.Unit = dto.Unit;
 
             if (dto.ImageFile != null)
             {

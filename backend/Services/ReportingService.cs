@@ -369,7 +369,7 @@ namespace Inventory.Services
                             x.CurrentPageNumber();
                         });
                 });
-            });
+            } );
 
             return document.GeneratePdf();
         }
