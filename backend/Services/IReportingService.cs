@@ -16,5 +16,10 @@ namespace Inventory.Services
         Task<byte[]> ExportReleaseOrdersReportPdfAsync(ReportRequestDto request, string userId, string userRole);
         Task<byte[]> ExportTransferOrdersReportPdfAsync(ReportRequestDto request, string userId, string userRole);
         Task<byte[]> ExportFinancialSummaryReportPdfAsync(ReportRequestDto request, string userId, string userRole);
+
+        // CSV export methods
+        Task<string> ExportSupplyOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole);
+        Task<string> ExportReleaseOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole);
+        Task<string> ExportTransferOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole);
     }
 }

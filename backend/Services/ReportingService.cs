@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using CsvHelper;
+using System.Globalization;
 
 namespace Inventory.Services
 {
@@ -255,20 +257,27 @@ namespace Inventory.Services
 
         private async Task<List<int>> GetAccessibleWarehouseIdsAsync(string userId, string userRole)
         {
+            Console.WriteLine($"GetAccessibleWarehouseIdsAsync called with UserId: {userId}, UserRole: {userRole}");
+
             if (userRole == "Owner")
             {
-                // Owners can access only warehouses they created
-                return await _context.Warehouses.Where(w => w.CreatedBy == userId).Select(w => w.Number).ToListAsync();
+                // Owners can access warehouses they created
+                var warehouses = await _context.Warehouses.Where(w => w.CreatedBy == userId && !w.IsDeleted).Select(w => w.Number).ToListAsync();
+                Console.WriteLine($"Warehouses found for owner {userId}: {warehouses.Count}");
+                return warehouses;
             }
             else if (userRole == "Manager")
             {
                 // Managers can only access their assigned warehouse
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-                return user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+                var warehouseIds = user?.WarehouseId.HasValue == true ? new List<int> { user.WarehouseId.Value } : new List<int>();
+                Console.WriteLine($"Warehouse found for manager {userId}: {(warehouseIds.Count > 0 ? warehouseIds[0].ToString() : "None")}");
+                return warehouseIds;
             }
             else
             {
                 // Employees have no warehouse access for reports
+                Console.WriteLine($"User {userId} with role {userRole} has no warehouse access for reports");
                 return new List<int>();
             }
         }
@@ -319,35 +328,38 @@ namespace Inventory.Services
                                         {
                                             table.ColumnsDefinition(columns =>
                                             {
-                                                columns.ConstantColumn(120);
-                                                columns.ConstantColumn(60);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
+                                                columns.RelativeColumn(2);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
                                             });
 
                                             table.Header(header =>
                                             {
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Product").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Qty").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit Price").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Total").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("MFD").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("EXP").SemiBold();
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Product").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Unit").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Qty").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Unit Price").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Total").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("MFD").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("EXP").Bold().FontSize(11);
                                             });
 
                                             foreach (var product in order.Products)
                                             {
-                                                table.Cell().PaddingVertical(5).Text(product?.ProductName ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Unit ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Quantity.ToString("N2") ?? "0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.UnitPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.TotalPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                                                var rowIndex = Array.IndexOf(order.Products.ToArray(), product);
+                                                var backgroundColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ProductName ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.Unit ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.Quantity.ToString("N2") ?? "0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.UnitPrice.ToString("C") ?? "$0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.TotalPrice.ToString("C") ?? "$0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(10);
                                             }
                                         });
                                     }
@@ -369,7 +381,7 @@ namespace Inventory.Services
                             x.CurrentPageNumber();
                         });
                 });
-            } );
+            });
 
             return document.GeneratePdf();
         }
@@ -420,35 +432,38 @@ namespace Inventory.Services
                                         {
                                             table.ColumnsDefinition(columns =>
                                             {
-                                                columns.ConstantColumn(120);
-                                                columns.ConstantColumn(60);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
+                                                columns.RelativeColumn(2);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
                                             });
 
                                             table.Header(header =>
                                             {
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Product").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Qty").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit Price").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Total").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("MFD").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("EXP").SemiBold();
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Product").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Unit").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Qty").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Unit Price").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("Total").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("MFD").Bold().FontSize(11);
+                                                header.Cell().Border(1).BorderColor(Colors.Black).Background(Colors.Grey.Lighten3).Padding(8).Text("EXP").Bold().FontSize(11);
                                             });
 
                                             foreach (var product in order.Products)
                                             {
-                                                table.Cell().PaddingVertical(5).Text(product?.ProductName ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Unit ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Quantity.ToString("N2") ?? "0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.UnitPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.TotalPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                                                var rowIndex = Array.IndexOf(order.Products.ToArray(), product);
+                                                var backgroundColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ProductName ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.Unit ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.Quantity.ToString("N2") ?? "0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.UnitPrice.ToString("C") ?? "$0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.TotalPrice.ToString("C") ?? "$0.00").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(10);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Background(backgroundColor).Padding(6).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(10);
                                             }
                                         });
                                     }
@@ -522,35 +537,39 @@ namespace Inventory.Services
                                         {
                                             table.ColumnsDefinition(columns =>
                                             {
-                                                columns.ConstantColumn(120);
-                                                columns.ConstantColumn(60);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
-                                                columns.ConstantColumn(80);
+                                                columns.RelativeColumn(2);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1.5f);
+                                                columns.RelativeColumn(1);
+                                                columns.RelativeColumn(1);
                                             });
 
+                                            // Add table header
                                             table.Header(header =>
                                             {
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Product").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Qty").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Unit Price").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("Total").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("MFD").SemiBold();
-                                                header.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).Text("EXP").SemiBold();
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Product Name").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Unit").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Quantity").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Unit Price").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Total Price").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Mfg Date").Bold().FontSize(10);
+                                                header.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten3).Padding(5).Text("Exp Date").Bold().FontSize(10);
                                             });
 
+                                            int rowIndex = 0;
                                             foreach (var product in order.Products)
                                             {
-                                                table.Cell().PaddingVertical(5).Text(product?.ProductName ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Unit ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.Quantity.ToString("N2") ?? "0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.UnitPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.TotalPrice.ToString("C") ?? "$0.00");
-                                                table.Cell().PaddingVertical(5).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
-                                                table.Cell().PaddingVertical(5).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                                                var backgroundColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.ProductName ?? "N/A").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.Unit ?? "N/A").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.Quantity.ToString("N2") ?? "0.00").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.UnitPrice.ToString("C") ?? "$0.00").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.TotalPrice.ToString("C") ?? "$0.00").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(9);
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Medium).Background(backgroundColor).Padding(5).Text(product?.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A").FontSize(9);
+                                                rowIndex++;
                                             }
                                         });
                                     }
@@ -684,6 +703,220 @@ namespace Inventory.Services
             });
 
             return document.GeneratePdf();
+        }
+
+        // CSV Export Methods
+        public async Task<string> ExportSupplyOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole)
+        {
+            var response = await GetSupplyOrdersReportAsync(request, userId, userRole);
+            if (!response.IsSuccess || response.Data == null)
+            {
+                return "Error: Unable to retrieve supply orders data";
+            }
+
+            using var writer = new StringWriter();
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            // Write header
+            csv.WriteField("Order Number");
+            csv.WriteField("Order Date");
+            csv.WriteField("Supplier Name");
+            csv.WriteField("Warehouse Name");
+            csv.WriteField("Total Value");
+            csv.WriteField("Product Name");
+            csv.WriteField("Unit");
+            csv.WriteField("Quantity");
+            csv.WriteField("Unit Price");
+            csv.WriteField("Total Price");
+            csv.WriteField("Manufacturing Date");
+            csv.WriteField("Expiration Date");
+            await csv.NextRecordAsync();
+
+            // Write data
+            foreach (var order in response.Data)
+            {
+                if (order.Products != null && order.Products.Any())
+                {
+                    foreach (var product in order.Products)
+                    {
+                        csv.WriteField(order.OrderNumber);
+                        csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                        csv.WriteField(order.SupplierName);
+                        csv.WriteField(order.WarehouseName);
+                        csv.WriteField(order.TotalValue.ToString("F2"));
+                        csv.WriteField(product.ProductName ?? "N/A");
+                        csv.WriteField(product.Unit ?? "N/A");
+                        csv.WriteField(product.Quantity.ToString("F2"));
+                        csv.WriteField(product.UnitPrice.ToString("F2"));
+                        csv.WriteField(product.TotalPrice.ToString("F2"));
+                        csv.WriteField(product.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        csv.WriteField(product.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        await csv.NextRecordAsync();
+                    }
+                }
+                else
+                {
+                    // Order with no products
+                    csv.WriteField(order.OrderNumber);
+                    csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                    csv.WriteField(order.SupplierName);
+                    csv.WriteField(order.WarehouseName);
+                    csv.WriteField(order.TotalValue.ToString("F2"));
+                    csv.WriteField("No products");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    await csv.NextRecordAsync();
+                }
+            }
+
+            return writer.ToString();
+        }
+
+        public async Task<string> ExportReleaseOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole)
+        {
+            var response = await GetReleaseOrdersReportAsync(request, userId, userRole);
+            if (!response.IsSuccess || response.Data == null)
+            {
+                return "Error: Unable to retrieve release orders data";
+            }
+
+            using var writer = new StringWriter();
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            // Write header
+            csv.WriteField("Order Number");
+            csv.WriteField("Order Date");
+            csv.WriteField("Customer Name");
+            csv.WriteField("Warehouse Name");
+            csv.WriteField("Total Value");
+            csv.WriteField("Product Name");
+            csv.WriteField("Unit");
+            csv.WriteField("Quantity");
+            csv.WriteField("Unit Price");
+            csv.WriteField("Total Price");
+            csv.WriteField("Manufacturing Date");
+            csv.WriteField("Expiration Date");
+            await csv.NextRecordAsync();
+
+            // Write data
+            foreach (var order in response.Data)
+            {
+                if (order.Products != null && order.Products.Any())
+                {
+                    foreach (var product in order.Products)
+                    {
+                        csv.WriteField(order.OrderNumber);
+                        csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                        csv.WriteField(order.CustomerName);
+                        csv.WriteField(order.WarehouseName);
+                        csv.WriteField(order.TotalValue.ToString("F2"));
+                        csv.WriteField(product.ProductName ?? "N/A");
+                        csv.WriteField(product.Unit ?? "N/A");
+                        csv.WriteField(product.Quantity.ToString("F2"));
+                        csv.WriteField(product.UnitPrice.ToString("F2"));
+                        csv.WriteField(product.TotalPrice.ToString("F2"));
+                        csv.WriteField(product.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        csv.WriteField(product.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        await csv.NextRecordAsync();
+                    }
+                }
+                else
+                {
+                    // Order with no products
+                    csv.WriteField(order.OrderNumber);
+                    csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                    csv.WriteField(order.CustomerName);
+                    csv.WriteField(order.WarehouseName);
+                    csv.WriteField(order.TotalValue.ToString("F2"));
+                    csv.WriteField("No products");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    await csv.NextRecordAsync();
+                }
+            }
+
+            return writer.ToString();
+        }
+
+        public async Task<string> ExportTransferOrdersReportCsvAsync(ReportRequestDto request, string userId, string userRole)
+        {
+            var response = await GetTransferOrdersReportAsync(request, userId, userRole);
+            if (!response.IsSuccess || response.Data == null)
+            {
+                return "Error: Unable to retrieve transfer orders data";
+            }
+
+            using var writer = new StringWriter();
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            // Write header
+            csv.WriteField("Order Number");
+            csv.WriteField("Order Date");
+            csv.WriteField("Supplier Name");
+            csv.WriteField("From Warehouse");
+            csv.WriteField("To Warehouse");
+            csv.WriteField("Total Value");
+            csv.WriteField("Product Name");
+            csv.WriteField("Unit");
+            csv.WriteField("Quantity");
+            csv.WriteField("Unit Price");
+            csv.WriteField("Total Price");
+            csv.WriteField("Manufacturing Date");
+            csv.WriteField("Expiration Date");
+            await csv.NextRecordAsync();
+
+            // Write data
+            foreach (var order in response.Data)
+            {
+                if (order.Products != null && order.Products.Any())
+                {
+                    foreach (var product in order.Products)
+                    {
+                        csv.WriteField(order.OrderNumber);
+                        csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                        csv.WriteField(order.SupplierName);
+                        csv.WriteField(order.FromWarehouseName);
+                        csv.WriteField(order.ToWarehouseName);
+                        csv.WriteField(order.TotalValue.ToString("F2"));
+                        csv.WriteField(product.ProductName ?? "N/A");
+                        csv.WriteField(product.Unit ?? "N/A");
+                        csv.WriteField(product.Quantity.ToString("F2"));
+                        csv.WriteField(product.UnitPrice.ToString("F2"));
+                        csv.WriteField(product.TotalPrice.ToString("F2"));
+                        csv.WriteField(product.ManufacturingDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        csv.WriteField(product.ExpirationDate?.ToString("yyyy-MM-dd") ?? "N/A");
+                        await csv.NextRecordAsync();
+                    }
+                }
+                else
+                {
+                    // Order with no products
+                    csv.WriteField(order.OrderNumber);
+                    csv.WriteField(order.OrderDate.ToString("yyyy-MM-dd"));
+                    csv.WriteField(order.SupplierName);
+                    csv.WriteField(order.FromWarehouseName);
+                    csv.WriteField(order.ToWarehouseName);
+                    csv.WriteField(order.TotalValue.ToString("F2"));
+                    csv.WriteField("No products");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    csv.WriteField("");
+                    await csv.NextRecordAsync();
+                }
+            }
+
+            return writer.ToString();
         }
     }
 }

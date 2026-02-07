@@ -183,3 +183,27 @@ Accept: application/json
 Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
 
 ###
+
+# Test CSV Export Endpoints
+# Note: These require Owner or Manager role authorization
+
+# Export Supply Orders Report as CSV
+GET {{Inventory_HostAddress}}/api/reports/supply-orders/csv?startDate=2024-01-01&endDate=2024-12-31
+Accept: text/csv
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###
+
+# Export Release Orders Report as CSV
+GET {{Inventory_HostAddress}}/api/reports/release-orders/csv?startDate=2024-01-01&endDate=2024-12-31
+Accept: text/csv
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###
+
+# Export Transfer Orders Report as CSV
+GET {{Inventory_HostAddress}}/api/reports/transfer-orders/csv?startDate=2024-01-01&endDate=2024-12-31
+Accept: text/csv
+Authorization: Bearer YOUR_MANAGER_JWT_TOKEN
+
+###

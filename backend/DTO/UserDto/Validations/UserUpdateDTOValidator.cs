@@ -21,11 +21,6 @@ namespace Inventory.DTO.UserDto.Validations
                 .EmailAddress()
                 .Unless(x => string.IsNullOrWhiteSpace(x.Mail))
                 .WithMessage("Please enter a valid email address");
-
-            RuleFor(x => x.Phone)
-                .Matches(@"^\d+$")
-                .Unless(x => string.IsNullOrWhiteSpace(x.Phone))
-                .WithMessage("Phone must contain only digits");
         }
     }
 }

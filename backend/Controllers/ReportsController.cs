@@ -5,6 +5,7 @@ using Inventory.Services.CurrentUser;
 using Inventory.Shares;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace Inventory.Controllers
 {
@@ -199,6 +200,76 @@ namespace Inventory.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, Inventory.Shares.Response.Failure($"Error generating PDF: {ex.Message}"));
+            }
+        }
+
+        // CSV Export Endpoints
+        [HttpGet("supply-orders/csv")]
+        [Authorize(Roles = "Owner,Manager")]
+        public async Task<IActionResult> ExportSupplyOrdersReportCsv([FromQuery] ReportRequestDto request)
+        {
+            var validator = new ReportRequestDtoValidator();
+            var validationResult = await validator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(Inventory.Shares.Response.Failure(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+            }
+
+            try
+            {
+                var csvContent = await _reportingService.ExportSupplyOrdersReportCsvAsync(request, _currentUser.UserId, _currentUser.UserRole);
+                return File(Encoding.UTF8.GetBytes(csvContent), "text/csv", "SupplyOrdersReport.csv");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Inventory.Shares.Response.Failure($"Error generating CSV: {ex.Message}"));
+            }
+        }
+
+        [HttpGet("release-orders/csv")]
+        [Authorize(Roles = "Owner,Manager")]
+        public async Task<IActionResult> ExportReleaseOrdersReportCsv([FromQuery] ReportRequestDto request)
+        {
+            var validator = new ReportRequestDtoValidator();
+            var validationResult = await validator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(Inventory.Shares.Response.Failure(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+            }
+
+            try
+            {
+                var csvContent = await _reportingService.ExportReleaseOrdersReportCsvAsync(request, _currentUser.UserId, _currentUser.UserRole);
+                return File(Encoding.UTF8.GetBytes(csvContent), "text/csv", "ReleaseOrdersReport.csv");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Inventory.Shares.Response.Failure($"Error generating CSV: {ex.Message}"));
+            }
+        }
+
+        [HttpGet("transfer-orders/csv")]
+        [Authorize(Roles = "Owner,Manager")]
+        public async Task<IActionResult> ExportTransferOrdersReportCsv([FromQuery] ReportRequestDto request)
+        {
+            var validator = new ReportRequestDtoValidator();
+            var validationResult = await validator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(Inventory.Shares.Response.Failure(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+            }
+
+            try
+            {
+                var csvContent = await _reportingService.ExportTransferOrdersReportCsvAsync(request, _currentUser.UserId, _currentUser.UserRole);
+                return File(Encoding.UTF8.GetBytes(csvContent), "text/csv", "TransferOrdersReport.csv");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Inventory.Shares.Response.Failure($"Error generating CSV: {ex.Message}"));
             }
         }
     }

@@ -21,9 +21,13 @@ using Inventory.Models;
 using Inventory.Shares;
 using Inventory.Services.CurrentUser;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure QuestPDF license
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add CORS policy
 builder.Services.AddCors(options =>
